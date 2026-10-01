@@ -1,16 +1,17 @@
+import { requireOperator } from '@/lib/access';
 import { ledger, LedgerError } from '@/lib/ledger';
 import { createRpc, VerificationError, verifyTransfer } from '@/lib/chain-verification';
-import { requireLocal, readJson } from '@/lib/local-access';
+import { readJson } from '@/lib/local-access';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 function failure(e: unknown) { return Response.json({ error: e instanceof LedgerError || e instanceof VerificationError ? e.message : 'The operation could not be completed. Please retry.' }, { status: e instanceof LedgerError || e instanceof VerificationError ? e.status : 500, headers }); }
-export async function GET(request: Request) { try { requireLocal(request); return Response.json(ledger().snapshot(), { headers }); } catch(e) { return failure(e); } }
+export async function GET(request: Request) { try { requireOperator(request); return Response.json(ledger().snapshot(), { headers }); } catch(e) { return failure(e); } }
 let active = 0;
 export async function POST(request: Request) {
   let acquired = false;
   try {
-    requireLocal(request);
+    requireOperator(request);
     if (active >= 3) throw new LedgerError('The ledger is busy. Please retry shortly.', 429);
     active++; acquired = true;
     const body = await readJson(request), db = ledger();
@@ -28,8 +29,10 @@ export async function POST(request: Request) {
       case 'match': {
         if (typeof body.id !== 'string') throw new LedgerError('Choose a payment request.');
         const row = db.request(body.id);
-        db.match(row.id, await verifyTransfer({ transactionHash: body.transactionHash, recipient: row.recipient, expectedAmount: row.amount })); break;
+        try { db.match(row.id, await verifyTransfer({ transactionHash: body.transactionHash, recipient: row.recipient, expectedAmount: row.amount })); } catch(e) { if(e instanceof LedgerError && e.status === 422 && typeof body.transactionHash === 'string') db.review(row.id,body.transactionHash,e.message); throw e; } break;
       }
+      case 'cancel': if(typeof body.id !== 'string') throw new LedgerError('Choose a request.'); db.cancel(body.id); break;
+      case 'resolve': if(typeof body.id !== 'string') throw new LedgerError('Choose a review item.'); db.resolveReview(body.id); break;
       case 'note': if (typeof body.id !== 'string') throw new LedgerError('Choose a payment request.'); db.note(body.id, body.text); break;
       default: throw new LedgerError('Unknown ledger action.');
     }

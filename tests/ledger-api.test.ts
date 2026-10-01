@@ -17,6 +17,7 @@ test('API creates, tracks, notes and matches a payment; rejects duplicate, cross
     return Response.json({jsonrpc:'2.0',id:1,result});
   };
   const {GET,POST}=await import('../src/app/api/ledger/route');
+  const publicApi=await import('../src/app/api/track/[token]/route');
   const {ledger}=await import('../src/lib/ledger');
   const send = (body: unknown, origin='http://localhost:3100') => POST(new Request('http://localhost:3100/api/ledger',{method:'POST',headers:{host:'localhost:3100',origin,'content-type':'application/json'},body:JSON.stringify(body)}));
   try {
@@ -25,7 +26,11 @@ test('API creates, tracks, notes and matches a payment; rejects duplicate, cross
     assert.equal(created.status,200); const state=await created.json(); const row=state.requests[0];
     assert.equal(row.afterBlock,100); assert.equal(row.status,'awaiting');
     assert.equal((await send({action:'note',id:row.id,text:'Never expose this note'})).status,200);
-    assert.equal((await send({action:'match',id:row.id,transactionHash:hash})).status,200);
+    const context={params:Promise.resolve({token:row.token})};
+    const publicGet=await publicApi.GET(new Request('http://localhost:3100/api/track/'+row.token,{headers:{host:'localhost:3100'}}),context);
+    const publicData=await publicGet.json();assert.ok(!('notes' in publicData));assert.ok(!('customer' in publicData));
+    const publicMatch=()=>publicApi.POST(new Request('http://localhost:3100/api/track/'+row.token,{method:'POST',headers:{host:'localhost:3100',origin:'http://localhost:3100','content-type':'application/json'},body:JSON.stringify({transactionHash:hash})}),context);
+    assert.equal((await publicMatch()).status,200);assert.equal((await publicMatch()).status,200);
     const refreshed=await GET(new Request('http://localhost:3100/api/ledger',{headers:{host:'localhost:3100'}}));
     const saved=await refreshed.json(); assert.equal(saved.requests[0].status,'received'); assert.equal(saved.requests[0].notes.length,1);
     assert.equal(ledger().tracking(row.token)?.transactionHash,hash);

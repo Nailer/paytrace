@@ -1,10 +1,10 @@
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
+import { chmodSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { units, decimal } from './payments';
 import { MONAD_TESTNET, type ChainProof } from './chain-types';
-import type { RequestRecord, FundingRecord, LedgerSnapshot } from './ledger-types';
+import type { RequestRecord, FundingRecord, LedgerSnapshot, TrackingRecord } from './ledger-types';
 export class LedgerError extends Error { constructor(message: string, public status = 400) { super(message); } }
 export function address(value: unknown): string {
   if (typeof value !== 'string' || !/^0x[\da-f]{40}$/i.test(value.trim()) || /^0x0{40}$/i.test(value.trim())) throw new LedgerError('Enter a valid, nonzero wallet address.');
@@ -19,15 +19,17 @@ export class Ledger {
   constructor(path: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
     this.db = new DatabaseSync(path);
+    if(path !== ':memory:') chmodSync(path,0o600);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS requests (id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS funding (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS reviews (id TEXT PRIMARY KEY, request_id TEXT NOT NULL, hash TEXT NOT NULL, reason TEXT NOT NULL, at TEXT NOT NULL, resolved INTEGER NOT NULL DEFAULT 0, UNIQUE(request_id,hash));
       CREATE TABLE IF NOT EXISTS claims (evidence_id TEXT PRIMARY KEY, owner TEXT NOT NULL);`);
   }
   snapshot(): LedgerSnapshot {
     const setting = this.db.prepare('SELECT value FROM settings WHERE key=?').get('recipient');
-    return { recipient: setting?.value as string || '', requests: this.db.prepare('SELECT data FROM requests ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)), funding: this.db.prepare('SELECT data FROM funding ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)) };
+    return { reviews: this.db.prepare('SELECT id, request_id AS requestId, hash AS transactionHash, reason, at, resolved FROM reviews ORDER BY at DESC LIMIT 100').all().map(r => ({ ...r, resolved: Boolean(r.resolved) })) as LedgerSnapshot['reviews'], recipient: setting?.value as string || '', requests: this.db.prepare('SELECT data FROM requests ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)), funding: this.db.prepare('SELECT data FROM funding ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)) };
   }
   setRecipient(value: unknown) { const recipient = address(value); this.db.prepare('INSERT OR REPLACE INTO settings VALUES (?,?)').run('recipient', recipient); return recipient; }
   create(input: Record<string, unknown>, afterBlock: number): RequestRecord {
@@ -46,13 +48,13 @@ export class Ledger {
     if (!row) throw new LedgerError('Payment request not found.', 404);
     return JSON.parse(row.data as string);
   }
-  tracking(token: string) {
+  tracking(token: string): TrackingRecord | null {
     if (!/^[a-f0-9]{48}$/.test(token)) return null;
     const row = this.db.prepare('SELECT data FROM requests WHERE token=?').get(token);
     if (!row) return null;
     const r: RequestRecord = JSON.parse(row.data as string);
     // Customer names, internal notes and funding records are never exposed here.
-    return { id: r.id, description: r.description, amount: r.amount, recipient: r.recipient, status: r.status, createdAt: r.createdAt, transactionHash: r.proof?.transactionHash || null };
+    return { payer: r.payer, proof: r.proof, id: r.id, description: r.description, amount: r.amount, recipient: r.recipient, status: r.status, createdAt: r.createdAt, transactionHash: r.proof?.transactionHash || null };
   }
   private claim(proof: ChainProof, owner: string, write: () => void) {
     if (proof.outcome !== 'verified' || proof.transfers.length !== 1) throw new LedgerError(proof.summary, 422);
@@ -72,17 +74,34 @@ export class Ledger {
   }
   match(id: string, proof: ChainProof): RequestRecord {
     const row = this.request(id);
-    if (row.status !== 'awaiting') throw new LedgerError('This request already has a verified payment.', 409);
+    if (row.status !== 'awaiting') throw new LedgerError('This request is no longer awaiting payment.', 409);
     if (proof.recipient !== row.recipient || units(proof.expectedAmount) !== units(row.amount)) throw new LedgerError('The evidence does not match this request.', 422);
     if (proof.blockNumber === null || proof.blockNumber <= row.afterBlock) throw new LedgerError('This transfer predates the request. Import it as historical funding instead.', 422);
     if (proof.transfers.length !== 1 || proof.transfers[0].isMint || proof.transfers[0].from !== row.payer) throw new LedgerError('The transfer must come from this request’s expected payer wallet.', 422);
     const updated: RequestRecord = { ...row, status: 'received', proof };
     this.claim(proof, row.id, () => {
       // A second verifier may have completed while its RPC request was in flight.
-      if (this.request(id).status !== 'awaiting') throw new LedgerError('This request already has a verified payment.', 409);
+      if (this.request(id).status !== 'awaiting') throw new LedgerError('This request is no longer awaiting payment.', 409);
       this.db.prepare('UPDATE requests SET data=? WHERE id=?').run(JSON.stringify(updated), id);
+      this.db.prepare('UPDATE reviews SET resolved=1 WHERE request_id=?').run(id);
     }); return updated;
   }
+  cancel(id: string) {
+    const row = this.request(id);
+    if (row.status !== 'awaiting') throw new LedgerError('Only an awaiting request can be cancelled.', 409);
+    row.status = 'cancelled';
+    this.db.prepare('UPDATE requests SET data=? WHERE id=?').run(JSON.stringify(row), id);
+    this.db.prepare('UPDATE reviews SET resolved=1 WHERE request_id=?').run(id);
+    return row;
+  }
+  review(id: string, hash: string, reason: string) {
+    this.request(id);
+    if (!/^0x[0-9a-f]{64}$/i.test(hash)) return;
+    const count = this.db.prepare('SELECT COUNT(*) AS n FROM reviews WHERE request_id=?').get(id);
+    if(Number(count?.n) >= 20) return;
+    this.db.prepare('INSERT OR IGNORE INTO reviews (id,request_id,hash,reason,at) VALUES (?,?,?,?,?)').run(randomUUID(),id,hash.toLowerCase(),reason.slice(0,500),new Date().toISOString());
+  }
+  resolveReview(id: string) { this.db.prepare('UPDATE reviews SET resolved=1 WHERE id=?').run(id); }
   note(id: string, value: unknown) {
     const row = this.request(id); row.notes.push({ text: text(value, 'Note', 1000), at: new Date().toISOString() });
     this.db.prepare('UPDATE requests SET data=? WHERE id=?').run(JSON.stringify(row), id); return row;
