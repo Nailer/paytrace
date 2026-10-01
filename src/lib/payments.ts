@@ -21,7 +21,9 @@ export function money(value: string, compact = false): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: compact ? 'compact' : 'standard', minimumFractionDigits: compact ? 0 : 2, maximumFractionDigits: compact ? 1 : 2 }).format(Number(value));
 }
 export function tokenAmount(value: string): string {
-  const raw = units(value);
+  if (!/^\d{1,78}(\.\d{1,6})?$/.test(value)) throw new Error('Invalid token amount.');
+  const [integer, fractional = ''] = value.split('.');
+  const raw = BigInt(integer) * 1_000_000n + BigInt(fractional.padEnd(6, '0'));
   const whole = (raw / 1_000_000n).toLocaleString('en-US');
   const fraction = (raw % 1_000_000n).toString().padStart(6, '0').replace(/0+$/, '').padEnd(2, '0');
   return `${whole}.${fraction}`;

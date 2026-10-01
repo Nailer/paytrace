@@ -27,6 +27,14 @@ npm run build
 
 See [the sprint plan](docs/SPRINT-PLAN.md). Payment amounts are reconciled using integer token units, demo transitions are validated and duplicate event IDs are ignored. Status charts and summaries are derived from the current records.
 
+## Read-only testnet verification
+
+Open `/verify` to inspect a real Circle test USDC transaction on Monad testnet. Supply a transaction hash, expected recipient and expected amount. The server verifies chain ID 10143, receipt success, canonical block hash, finalized-block coverage, the supported token contract and exact ERC-20 transfer evidence. It does not assign invoices or alter demo records. Mints are labelled; multiple candidate events require review. Missing receipts remain unknown.
+
+The public RPC endpoint was reached successfully. A positive live USDC verification is still awaiting a test transaction; no suitable transfer was found in a bounded scan of 2,000 recent blocks. Nineteen automated tests and the production build pass. Invalid input was verified to return HTTP 400.
+
+Network reference: [Monad developer documentation](https://docs.monad.xyz/ai/current-facts). Token reference: [Circle’s Monad USDC announcement](https://www.circle.com/blog/now-available-usdc-cctp-wallets-and-contracts-on-monad).
+
 ## Next milestones
 
-Server-owned persistent ledger and authentication, real Monad testnet receipt verification, signed provider webhooks, secure public tracking links, deployment and hackathon materials. Provider credentials and signing keys are never committed.
+Complete live receipt acceptance testing, then add a server-owned persistent ledger and authentication, signed provider webhooks, secure public tracking links, deployment and hackathon materials. Provider credentials and signing keys are never committed. The verifier’s in-memory request budget needs distributed rate limiting before a public production deployment.
