@@ -1,0 +1,10 @@
+import { randomBytes, scryptSync } from 'node:crypto';
+import { existsSync, writeFileSync } from 'node:fs';
+const origin = process.argv[2];
+if (!origin || new URL(origin).protocol !== 'https:' || new URL(origin).origin !== origin) throw new Error('Usage: node scripts/setup-hosting.mjs https://your-app.example.com');
+if (existsSync('.env.hosting') || existsSync('.env.hosting-password')) throw new Error('Hosting credentials already exist. Preserve them before generating replacements.');
+const password=randomBytes(24).toString('base64url'), salt=randomBytes(16).toString('hex');
+const values=`PAYTRACE_PUBLIC_ORIGIN=${origin}\nPAYTRACE_PASSWORD_HASH=${salt}:${scryptSync(password,salt,64).toString('hex')}\nPAYTRACE_SESSION_SECRET=${randomBytes(48).toString('base64url')}\nPAYTRACE_DB_PATH=/data/paytrace.sqlite\n`;
+writeFileSync('.env.hosting',values,{mode:0o600,flag:'wx'});
+writeFileSync('.env.hosting-password',`Workspace password: ${password}\nKeep this private. Do not commit or put it in a demo video.\n`,{mode:0o600,flag:'wx'});
+console.log('Created private .env.hosting and .env.hosting-password files. Add the environment values to your host, and keep the password for signing in.');

@@ -1,0 +1,3 @@
+import type { RequestRecord } from './ledger-types';
+export function ledgerCsv(rows:RequestRecord[]){const escape=(v:string)=>`"${(/^[=+\-@\t\r]/.test(v)?"'"+v:v).replaceAll('"','""')}"`;return [['Request','Customer','Description','USDC requested','Status','Recipient','Payer','Created','Transaction','Network'],...rows.map(r=>[r.id,r.customer,r.description,r.amount,r.status,r.recipient,r.payer,r.createdAt,r.proof?.transactionHash||'','Monad Testnet'])].map(row=>row.map(escape).join(',')).join('\r\n');}
+export function downloadFile(name:string,body:string,type='application/json'){const url=URL.createObjectURL(new Blob([body],{type}));const link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
