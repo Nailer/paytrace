@@ -5,7 +5,7 @@ PayTrace supports Vercel with a remote Turso database, or a persistent Node 24 h
 ## Vercel deployment
 
 1. Link this working branch to a Vercel project. Do not deploy the old prototype from `main`.
-2. Add the Turso Cloud integration with its Starter plan and connect it to Production. The account owner must accept the marketplace terms. The integration supplies `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` as server-only variables.
+2. Add the Turso Cloud integration with its Starter plan and connect it to Production. The account owner must accept the marketplace terms. For production, use a dedicated resource with the `PAYTRACE_PROD_` prefix. It supplies `PAYTRACE_PROD_TURSO_DATABASE_URL` and `PAYTRACE_PROD_TURSO_AUTH_TOKEN`; these take precedence over the generic Turso variables. Keep development and preview resources separate.
 3. Set `PAYTRACE_PUBLIC_ORIGIN` to the production HTTPS alias, and configure `PAYTRACE_PASSWORD_HASH` and `PAYTRACE_SESSION_SECRET` using the credential generator below. Never prefix these with `NEXT_PUBLIC_`.
 4. Deploy using Node 24. On Vercel, missing remote database configuration or public origin fails closed; no temporary local ledger is created.
 5. Run every hosted acceptance check below. A successful build alone does not establish a working deployment.
