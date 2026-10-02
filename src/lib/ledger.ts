@@ -29,7 +29,7 @@ export class Ledger {
   }
   snapshot(): LedgerSnapshot {
     const setting = this.db.prepare('SELECT value FROM settings WHERE key=?').get('recipient');
-    return { reviews: this.db.prepare('SELECT id, request_id AS requestId, hash AS transactionHash, reason, at, resolved FROM reviews ORDER BY at DESC LIMIT 100').all().map(r => ({ ...r, resolved: Boolean(r.resolved) })) as LedgerSnapshot['reviews'], recipient: setting?.value as string || '', requests: this.db.prepare('SELECT data FROM requests ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)), funding: this.db.prepare('SELECT data FROM funding ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)) };
+    return { reviews: this.db.prepare('SELECT id, request_id AS requestId, hash AS transactionHash, reason, at, resolved FROM reviews WHERE resolved=0 OR id IN (SELECT id FROM reviews WHERE resolved=1 ORDER BY at DESC LIMIT 100) ORDER BY resolved ASC, at DESC').all().map(r => ({ ...r, resolved: Boolean(r.resolved) })) as LedgerSnapshot['reviews'], recipient: setting?.value as string || '', requests: this.db.prepare('SELECT data FROM requests ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)), funding: this.db.prepare('SELECT data FROM funding ORDER BY rowid DESC').all().map(r => JSON.parse(r.data as string)) };
   }
   setRecipient(value: unknown) { const recipient = address(value); this.db.prepare('INSERT OR REPLACE INTO settings VALUES (?,?)').run('recipient', recipient); return recipient; }
   create(input: Record<string, unknown>, afterBlock: number): RequestRecord {

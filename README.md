@@ -1,5 +1,7 @@
 # PayTrace
 
+![PayTrace logo](public/brand/paytrace-logo.png)
+
 **Every payment, accounted for.**
 
 PayTrace connects a Monad USDC payment request to its customer checkout and finalized onchain evidence. A payer sends directly from their wallet; the server verifies the transfer; both sides can follow the result. No custodial keys, token allowances or fictional payment records are needed.
@@ -48,15 +50,17 @@ npm run typecheck
 npm run build
 ```
 
-36 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
+37 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
 
-Fresh wallet-signed checkout acceptance and a visual check of the final checkout remain release gates. Do not represent mocked test RPC fixtures as live payment evidence.
+A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The final visual walkthrough, judge access and hosted acceptance remain release gates. Do not represent mocked test RPC fixtures as live payment evidence.
 
 ## Deploy and demonstrate
 
 - [Hosting and backup](docs/DEPLOYMENT.md)
 - [Demo video walkthrough](docs/DEMO-VIDEO.md)
 - [Release checklist and known limits](docs/RELEASE.md)
+- [Judge-perspective review](docs/JUDGE-REVIEW.md)
+- [Submission summary](docs/SUBMISSION-SUMMARY.md)
 - In-app guide: `/guide`
 
 ## Current boundaries

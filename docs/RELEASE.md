@@ -6,14 +6,14 @@ Merchant ledger and customer checkout; exact direct USDC wallet transfer; suppor
 
 ## Verified
 
-- 36 automated tests, including public checkout API and privacy, wrong wallet, cancelled requests, immutable evidence, exact amounts, persistence, session tampering and expiry, origin protections, review acknowledgement and CSV safety.
+- 37 automated tests, including public checkout API and privacy, wrong wallet, cancelled requests, immutable evidence, exact amounts, persistence, session tampering and expiry, origin protections, review acknowledgement and CSV safety.
 - Production build and TypeScript checks.
 - Existing real 20 test USDC funding evidence retained across the production-server restart.
 - Isolated production HTTP flow against the live Monad RPC: request creation; checkout read; rejection of a pre-request real transfer; review item creation; request remains unpaid; cancellation closes checkout.
 
 ## Release gates still open
 
-- Fresh wallet-signed payment from the funded account to a second user-controlled account, followed by actual checkout verification and receipt download.
+- Real-payment verification has passed: the prepared 1 test USDC request is Received and its transaction was rechecked against the live RPC. Actual wallet-popup footage and receipt-download visual acceptance remain to be captured.
 - Visual acceptance of final checkout and updated merchant screens. Browser automation hit a blocked internal error page after the server restart; this must be checked after the user reopens the HTTP app.
 - Public hosting. The owner currently has no hosting account. Docker configuration is prepared, not deployed or container-tested.
 
