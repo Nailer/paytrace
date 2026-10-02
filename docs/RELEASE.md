@@ -13,6 +13,7 @@ Public source: https://github.com/Nailer/paytrace
 - Hosted request creation and public checkout work; customer names and private notes remain hidden.
 - Earlier transfer rejected for a newly created request with 422; acceptance request cancelled successfully.
 - Desktop dashboard and 390px mobile checkout visually inspected through the live site.
+- Production-only database configured after detecting changing database identities in the original integration. Wallet settings, both request records, the historical receipt and the exact checkout token survived a complete redeployment.
 - A fresh hosted 1 USDC recording request is awaiting the owner's wallet payment. No transaction was sent by the release process.
 
 ## Recording and submission steps

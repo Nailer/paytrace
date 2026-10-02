@@ -2,7 +2,7 @@ import { createClient, type Client, type Transaction, type InValue } from '@libs
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { units, decimal } from './payments';
 import { MONAD_TESTNET, type ChainProof } from './chain-types';
 import type { RequestRecord, FundingRecord, LedgerSnapshot, TrackingRecord } from './ledger-types';
@@ -149,8 +149,10 @@ export class Ledger {
 const globals = globalThis as unknown as { paytraceLedger?: Ledger };
 export function ledger() {
   if (globals.paytraceLedger) return globals.paytraceLedger;
-  const url = process.env.TURSO_DATABASE_URL;
-  if (process.env.VERCEL && (!url || !process.env.TURSO_AUTH_TOKEN)) throw new LedgerError('Hosted database is not configured.', 503);
+  const url = process.env.PAYTRACE_PROD_TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.PAYTRACE_PROD_TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
+  console.info('PayTrace storage', { backend: url ? 'turso' : 'local', database: url ? createHash('sha256').update(url).digest('hex').slice(0,12) : 'local', hosted: Boolean(process.env.VERCEL) });
+  if (process.env.VERCEL && (!url || !authToken)) throw new LedgerError('Hosted database is not configured.', 503);
   if (url && !/^(libsql|https):\/\//.test(url)) throw new LedgerError('Hosted database requires a secure remote URL.', 503);
-  return globals.paytraceLedger = new Ledger(url || resolve(/* turbopackIgnore: true */ process.env.PAYTRACE_DB_PATH || '.data/paytrace.sqlite'), process.env.TURSO_AUTH_TOKEN);
+  return globals.paytraceLedger = new Ledger(url || resolve(/* turbopackIgnore: true */ process.env.PAYTRACE_DB_PATH || '.data/paytrace.sqlite'), authToken);
 }
