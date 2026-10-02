@@ -1,24 +1,26 @@
-# PayTrace release candidate
+# PayTrace testnet release — 2 October 2026
 
-## Implemented
+Live app: https://paytrace-tau.vercel.app
+Public source: https://github.com/Nailer/paytrace
 
-Merchant ledger and customer checkout; exact direct USDC wallet transfer; supported-network switching and expected-account validation; manual hash fallback; pending-verification retries; responsive checkout journey; shared server-owned payment status; review inbox; cancellation; private notes; downloadable evidence; printable receipt; CSV export; hosted single-operator authentication; security headers; consistent database backup; Docker packaging; user guide and demo walkthrough.
+## Delivered and verified
 
-## Verified
+- Vercel production deployment with remote Turso storage and private operator login.
+- 39 automated tests and successful production build; GitHub CI passed for implementation commit afba397.
+- Hosted login returns 200, unauthenticated ledger returns 401, cross-origin write returns 403.
+- Receiving wallet saved in the hosted database and loaded by the live dashboard.
+- Real earlier 1 test USDC transfer verified on the hosted service and saved as historical funding.
+- Hosted request creation and public checkout work; customer names and private notes remain hidden.
+- Earlier transfer rejected for a newly created request with 422; acceptance request cancelled successfully.
+- Desktop dashboard and 390px mobile checkout visually inspected through the live site.
+- A fresh hosted 1 USDC recording request is awaiting the owner's wallet payment. No transaction was sent by the release process.
 
-- 37 automated tests, including public checkout API and privacy, wrong wallet, cancelled requests, immutable evidence, exact amounts, persistence, session tampering and expiry, origin protections, review acknowledgement and CSV safety.
-- Production build and TypeScript checks.
-- Existing real 20 test USDC funding evidence retained across the production-server restart.
-- Isolated production HTTP flow against the live Monad RPC: request creation; checkout read; rejection of a pre-request real transfer; review item creation; request remains unpaid; cancellation closes checkout.
+## Recording and submission steps
 
-## Release gates still open
+Record the actual wallet approval and resulting hosted receipt using the prepared recording guide, then add the video URL to the submission. The completed earlier payment belongs to the local request; on hosting it is explicitly historical funding, not payment for the new request. Do not mix their request IDs or hashes.
 
-- Real-payment verification has passed: the prepared 1 test USDC request is Received and its transaction was rechecked against the live RPC. Actual wallet-popup footage and receipt-download visual acceptance remain to be captured.
-- Visual acceptance of final checkout and updated merchant screens. Browser automation hit a blocked internal error page after the server restart; this must be checked after the user reopens the HTTP app.
-- Public hosting. The owner currently has no hosting account. Docker configuration is prepared, not deployed or container-tested.
+Confirm the official submission portal's exact eligibility, deadline/timezone and required fields. Public listings disagree on the October 12/13 deadline; this release does not certify eligibility or claim entry submission.
 
-## Deliberate scope
+## Scope and limits
 
-Monad testnet USDC, one merchant workspace, one persistent Node process. No fiat settlement, provider payouts, automated refunds, multi-tenant accounts, cross-chain assets or unattended chain indexer. Verification retries occur while checkout is open, and do not continue as a background server worker. The former `/demo` route is archived prototype work, not operational data.
-
-Do not call the release fully accepted or publicly deployed until the open gates have evidence.
+Single merchant workspace; Monad testnet USDC only. No fiat settlement, refunds, multi-tenant accounts, cross-chain support or unattended indexer. Checkout verifies while open and supports manual hash recovery. Verification budgets remain per instance; wider exposure requires platform rate controls. Docker is an alternative packaging option, not the deployed or container-tested route. Merchant password must remain private; arrange judge access separately from public checkout.

@@ -22,13 +22,11 @@ A real historical funding receipt and a fresh 1 test USDC request payment have b
 
 ## Current scope
 
-One merchant workspace, Monad testnet, persistent SQLite ledger and an injected-wallet checkout. This is not a fiat settlement service, multi-tenant SaaS or unattended indexer. Verification retries while checkout is open; a manual hash fallback supports recovery. Hosting is prepared but not deployed.
+One merchant workspace, Monad testnet, persistent SQLite ledger and an injected-wallet checkout. This is not a fiat settlement service, multi-tenant SaaS or unattended indexer. Verification retries while checkout is open; a manual hash fallback supports recovery. Deployed on Vercel with persistent Turso storage: https://paytrace-tau.vercel.app. Public source: https://github.com/Nailer/paytrace.
 
 ## Add only after verified
 
-- Accessible source-code URL and accepted branch/commit.
 - Final video URL.
-- Deployed product URL, if available.
 - Exact official track and submission fields.
 
 Never replace missing assets with invented URLs, adoption numbers or performance claims.

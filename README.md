@@ -52,7 +52,15 @@ npm run build
 
 39 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
 
-A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The final visual walkthrough, judge access and hosted acceptance remain release gates. Do not represent mocked test RPC fixtures as live payment evidence.
+A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The Vercel deployment passes hosted sign-in, database writes, checkout privacy, historical-transfer rejection and cancellation checks. Desktop dashboard and mobile checkout have been visually inspected. A fresh hosted wallet payment and final demo video remain user recording steps. Do not represent mocked test RPC fixtures as live payment evidence.
+
+## Live release
+
+- [Live PayTrace](https://paytrace-tau.vercel.app)
+- [Public transaction verifier](https://paytrace-tau.vercel.app/verify)
+- [User guide](https://paytrace-tau.vercel.app/guide)
+
+Merchant access requires the owner’s workspace password. Customer checkout links and the verifier are public. Judges can inspect the source and verifier without credentials; arrange private merchant access with the owner for a full write walkthrough.
 
 ## Deploy and demonstrate
 
