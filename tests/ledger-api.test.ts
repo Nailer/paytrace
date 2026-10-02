@@ -33,8 +33,8 @@ test('API creates, tracks, notes and matches a payment; rejects duplicate, cross
     assert.equal((await publicMatch()).status,200);assert.equal((await publicMatch()).status,200);
     const refreshed=await GET(new Request('http://localhost:3100/api/ledger',{headers:{host:'localhost:3100'}}));
     const saved=await refreshed.json(); assert.equal(saved.requests[0].status,'received'); assert.equal(saved.requests[0].notes.length,1);
-    assert.equal(ledger().tracking(row.token)?.transactionHash,hash);
-    assert.ok(!JSON.stringify(ledger().tracking(row.token)).includes('Never expose'));
+    assert.equal((await ledger().tracking(row.token))?.transactionHash,hash);
+    assert.ok(!JSON.stringify((await ledger().tracking(row.token))).includes('Never expose'));
     assert.equal((await send({action:'import',label:'Already used',amount:'1.000001',transactionHash:hash})).status,409);
     assert.equal((await send({action:'settings',recipient},'https://untrusted.example')).status,403);
     assert.equal((await send({action:'note',id:row.id,text:'x'.repeat(9000)})).status,413);

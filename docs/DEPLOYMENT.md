@@ -1,6 +1,20 @@
 # Hosting PayTrace
 
-PayTrace can run locally for a recorded demo without a hosting account. A public customer link requires an HTTPS host with a persistent disk and one Node 24 process. A static-site host or ephemeral filesystem is unsuitable for the SQLite ledger.
+PayTrace supports Vercel with a remote Turso database, or a persistent Node 24 host with local SQLite. Never store the ledger on Vercel's ephemeral filesystem.
+
+## Vercel deployment
+
+1. Link this working branch to a Vercel project. Do not deploy the old prototype from `main`.
+2. Add the Turso Cloud integration with its Starter plan and connect it to Production. The account owner must accept the marketplace terms. The integration supplies `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` as server-only variables.
+3. Set `PAYTRACE_PUBLIC_ORIGIN` to the production HTTPS alias, and configure `PAYTRACE_PASSWORD_HASH` and `PAYTRACE_SESSION_SECRET` using the credential generator below. Never prefix these with `NEXT_PUBLIC_`.
+4. Deploy using Node 24. On Vercel, missing remote database configuration or public origin fails closed; no temporary local ledger is created.
+5. Run every hosted acceptance check below. A successful build alone does not establish a working deployment.
+
+Local records are not uploaded automatically. Keep local receipt evidence and either migrate a verified backup with a private migration procedure or create fresh hosted requests. Never commit or upload the private SQLite database as a deployment asset. Preview environments must use separate database credentials and their own explicit origin before write testing.
+
+Login throttling is stored in the database and keyed by an HMAC of Vercel's trusted forwarded client IP. Five attempts per 15 minutes are allowed per key; people on a shared network share that budget. Non-Vercel hosts use a shared fallback budget and should configure edge protection. Verification budgets remain per process; use platform edge limits for broader exposure.
+
+## Persistent server alternative
 
 ## Before deploying
 

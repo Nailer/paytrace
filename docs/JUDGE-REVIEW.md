@@ -2,6 +2,10 @@
 
 Review date: 2 October 2026. This is the builder assistant's evidence-based review, not an official hackathon score or independent security audit.
 
+## Deployment follow-up
+
+The Vercel preparation changes replace synchronous local-only storage with an asynchronous libSQL adapter supporting Turso. Payment claims, notes, cancellation and review creation use write transactions. Login budgets now persist and are isolated by trusted Vercel client address. These changes address the local-file and shared-login limitations below; remote deployment acceptance remains pending. The original observations below describe the reviewed pre-deployment version.
+
 ## Verdict
 
 A functioning testnet MVP with real payment evidence; not yet a finished, judge-accessible submission or a production payments service. The real-payment verification gate is now satisfied. Delivery and operational gaps should be closed before calling it done.

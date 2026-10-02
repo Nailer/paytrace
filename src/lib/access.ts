@@ -5,7 +5,7 @@ export const SESSION_COOKIE = 'paytrace_session';
 export function hosted() { return Boolean(process.env.PAYTRACE_PUBLIC_ORIGIN); }
 export function publicOrigin() {
   const value = process.env.PAYTRACE_PUBLIC_ORIGIN;
-  if (!value) return null;
+  if (!value) { if (process.env.VERCEL) throw new LedgerError('Public origin is not configured.',503); return null; }
   const url = new URL(value);
   if (url.protocol !== 'https:' || url.origin !== value) throw new LedgerError('Hosting configuration requires an HTTPS origin without a trailing slash.',503);
   if (!process.env.PAYTRACE_SESSION_SECRET || process.env.PAYTRACE_SESSION_SECRET.length < 32 || !process.env.PAYTRACE_PASSWORD_HASH) throw new LedgerError('Workspace authentication is not configured.',503);

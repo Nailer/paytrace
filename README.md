@@ -50,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-37 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
+39 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
 
 A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The final visual walkthrough, judge access and hosted acceptance remain release gates. Do not represent mocked test RPC fixtures as live payment evidence.
 
@@ -65,7 +65,7 @@ A fresh 1 test USDC transfer has now been matched to its prepared request and in
 
 ## Current boundaries
 
-Monad **testnet only**. No real-money bank payouts, fiat conversion, automatic refunds, multi-tenant organization accounts or unattended chain indexer. Customer verification runs while checkout is open, with a four-minute retry window; the transaction hash is retained locally where storage is available. Merchant status refreshes every 15 seconds. The host is a single persistent Node process with SQLite; do not horizontally scale it without replacing in-memory rate controls and coordinating storage.
+Monad **testnet only**. No real-money bank payouts, fiat conversion, automatic refunds, multi-tenant organization accounts or unattended chain indexer. Customer verification runs while checkout is open, with a four-minute retry window; the transaction hash is retained locally where storage is available. Merchant status refreshes every 15 seconds. Vercel deployment uses remote Turso storage; a persistent single-process host can use local SQLite. Verification rate budgets remain per process.
 
 Hosted links are shareable only after actual HTTPS deployment. Anyone with a checkout token can see its description, amount, wallet addresses and receipt; customer names and internal notes are omitted. Wallet signing needs an injected EIP-1193 provider. The in-app preview browser may have no wallet extension; use a supported browser or manual transfer/hash verification.
 
