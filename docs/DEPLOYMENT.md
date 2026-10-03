@@ -32,7 +32,7 @@ This creates two private files, both excluded from Git: `.env.hosting` with serv
 
 6. Copy values from `.env.hosting` into the host's private environment settings. Set the public origin to the exact HTTPS origin without a trailing slash. The session secret must remain server-only.
 7. Deploy. The container refuses to start without required authentication and database settings. The reverse proxy must preserve the actual public Host header and terminate HTTPS.
-8. Open `/signup` to create a merchant account, save its recovery code, then save the receiving wallet. The original operator workspace uses `/owner` and the generated password. Test the checkout in a separate signed-out browser: it should work with its unguessable link while `/api/ledger` remains unauthorized.
+8. Open `/start` to prepare a request and `/login` for wallet sign-in. Set `PAYTRACE_SESSION_SECRET` for wallet authentication, including local testing. Existing password accounts use `/password-login`. The original operator workspace uses `/owner` and the generated password. Test the checkout in a separate signed-out browser: it should work with its unguessable link while `/api/ledger` remains unauthorized.
 
 Each merchant account owns one isolated workspace. Account recovery rotates its recovery code and revokes its existing sessions. There is no email recovery or team membership yet. Add external edge throttling and monitoring for wider public usage. Rotating the original owner password also needs a new session secret to revoke legacy sessions; this signs out all accounts. Sessions otherwise expire in eight hours.
 

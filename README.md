@@ -13,7 +13,7 @@ PayTrace connects a Monad USDC payment request to its customer checkout and fina
 - Receipts: printable customer receipt and downloadable JSON evidence with token event, canonical block and finalization information.
 - Review inbox: mismatches are explained without marking a request paid. Acknowledgement changes the review item, never the financial status.
 - Historical funding: independently verified receipts, separated from customer payments.
-- Single-workspace hosting mode: password sign-in, signed expiring HttpOnly cookies, origin checks, rate budgets, HTTPS configuration and persistent Docker deployment.
+- Guest-first request preparation and password-free wallet sign-in; isolated merchant workspaces, signed expiring HttpOnly cookies, origin checks, rate budgets, HTTPS configuration and persistent Docker deployment.
 - Responsive interface, searchable requests, automatic workspace refresh and in-app user guide.
 
 The main workspace starts empty. A real user-provided 20 test USDC funding transfer has been verified and saved in the developer's local database; wallet data and evidence are excluded from Git. The archived `/demo` route is a clearly labelled design prototype and is not the product's operational flow.
@@ -50,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-42 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
+46 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
 
 A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The Vercel deployment passes hosted sign-in, database writes, checkout privacy, historical-transfer rejection and cancellation checks. Desktop dashboard and mobile checkout have been visually inspected. A fresh hosted wallet payment and final demo video remain user recording steps. Do not represent mocked test RPC fixtures as live payment evidence.
 
@@ -60,7 +60,7 @@ A fresh 1 test USDC transfer has now been matched to its prepared request and in
 - [Public transaction verifier](https://paytrace-tau.vercel.app/verify)
 - [User guide](https://paytrace-tau.vercel.app/guide)
 
-Anyone can create a merchant account at `/signup`, save their recovery code and set up a receiving wallet in `/workspace`. Each account has an isolated workspace. Customer checkout links and the verifier remain public. The original owner workspace is preserved at `/owner` with its existing password.
+Anyone can prepare a request at `/start` without signing in. Publishing asks for a wallet signature at `/login`, then returns to the draft for explicit review and publication. First sign-in creates a workspace; returning with the same wallet reopens it. Each account has an isolated workspace. Customer checkout links and the verifier remain public. The original owner workspace is preserved at `/owner` with its existing password.
 
 ## Deploy and demonstrate
 
@@ -83,6 +83,6 @@ References: [Monad testnet](https://docs.monad.xyz/developer-essentials/testnet)
 
 ## Accounts and isolation
 
-Accounts use unique usernames and salted password hashes. Signup returns a private recovery code once; store it outside PayTrace. Recovery rotates that code and invalidates previous sessions. No email verification or email recovery is offered. A merchant account owns one workspace. Requests, funding, notes, reviews and wallet settings are scoped on the server, never by a workspace ID from the client. Public checkout tokens expose only customer-facing fields and resolve their owning workspace internally. Duplicate evidence is prevented within each workspace; another account cannot reserve a public transfer to block its legitimate owner.
+New accounts use EIP-4361 wallet signatures verified server-side with a five-minute, single-use challenge bound to an HttpOnly browser cookie and the application origin. No payment or allowance is requested. Standard externally owned wallets are supported; contract wallets and WalletConnect are not yet supported. Existing username/password accounts remain at `/password-login`, with recovery codes and session revocation. Wallet sign-in does not automatically link or migrate these records. No email verification or email recovery is offered. A merchant account owns one workspace. Requests, funding, notes, reviews and wallet settings are scoped on the server, never by a workspace ID from the client. Public checkout tokens expose only customer-facing fields and resolve their owning workspace internally. Duplicate evidence is prevented within each workspace; another account cannot reserve a public transfer to block its legitimate owner.
 
 Existing records remain in the original workspace. New-account registration does not claim them. This is an initial multi-merchant testnet release, not an audited production payments service. No team permissions, email delivery or platform-wide abuse protection beyond current request budgets are claimed.

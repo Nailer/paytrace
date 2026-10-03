@@ -1,2 +1,2 @@
-import {AccountForm} from '@/components/account-form';
-export default function Login(){return <AccountForm mode="signin"/>;}
+import { WalletLogin } from '@/components/wallet-login';
+export default function Login(){return <WalletLogin/>;}

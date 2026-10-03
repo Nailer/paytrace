@@ -29,3 +29,10 @@ Independent merchant accounts with one workspace per account; Monad testnet USDC
 ## Merchant onboarding release
 
 Adds public landing page, signup, username/password sign-in, private recovery-code reset, workspace naming and wallet setup. The existing owner workspace remains accessible at `/owner`. Additive ownership/account tables preserve existing records. Tests include cross-workspace read/write denial, public checkout ownership resolution, recovery-code rotation and old-session invalidation.
+
+## Guest-first and wallet access release
+
+- `/start` prepares and reviews a real request without authentication; the draft is held in tab-local session storage through sign-in. Publication remains authenticated and requires explicit confirmation after returning.
+- `/login` and `/signup` use one wallet-signature flow. SIWE challenges expire after five minutes, bind to the browser and origin, and are consumed atomically once. Existing account access remains at `/password-login` and `/owner`.
+- 46 automated tests cover draft validation, wallet ownership, wrong origin/browser/signature, expiry, replay and returning workspace identity, alongside existing ledger checks.
+- Wallet access currently requires an injected EOA wallet (extension or wallet browser). Email codes, contract-wallet authentication and account linking are not implemented.
