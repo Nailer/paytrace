@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-import { LedgerError } from './ledger';
+import { ledger, LedgerError } from './ledger';
 import { requireLocal } from './local-access';
 export const SESSION_COOKIE = 'paytrace_session';
 export function hosted() { return Boolean(process.env.PAYTRACE_PUBLIC_ORIGIN); }
@@ -19,8 +19,8 @@ export function requireSite(request: Request) {
   if ((supplied && supplied !== origin) || (request.method !== 'GET' && request.method !== 'HEAD' && supplied !== origin)) throw new LedgerError('Open this action from PayTrace.',403);
   if (request.headers.get('sec-fetch-site') === 'cross-site' && request.method !== 'GET') throw new LedgerError('Cross-site action blocked.',403);
 }
-export function makeSession(secret: string, now = Date.now()) {
-  const body = Buffer.from(JSON.stringify({exp:now+8*60*60*1000,nonce:randomBytes(16).toString('hex')})).toString('base64url');
+export function makeSession(secret: string, now = Date.now(), account?: {id:string;version:number}) {
+  const body = Buffer.from(JSON.stringify({sub:account?.id,version:account?.version,exp:now+8*60*60*1000,nonce:randomBytes(16).toString('hex')})).toString('base64url');
   return `${body}.${createHmac('sha256',secret).update(body).digest('base64url')}`;
 }
 export function validSession(token: string | undefined, secret: string, now = Date.now()) {
@@ -35,4 +35,15 @@ export function requireOperator(request: Request) {
   requireSite(request); if (!hosted()) return;
   const token=request.headers.get('cookie')?.split(';').map(v=>v.trim()).find(v=>v.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length+1);
   if(!validSession(token,process.env.PAYTRACE_SESSION_SECRET!)) throw new LedgerError('Please sign in to your workspace.',401);
+}
+
+export async function operatorLedger(request: Request) {
+  requireOperator(request);
+  if (!hosted()) return ledger();
+  const token=request.headers.get('cookie')?.split(';').map(v=>v.trim()).find(v=>v.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length+1);
+  const claims=JSON.parse(Buffer.from(token!.split('.')[0],'base64url').toString());
+  if (!claims.sub) return ledger(); // Existing owner sessions retain the original workspace only.
+  const account=await ledger().accountById(claims.sub);
+  if(!account || account.version!==claims.version)throw new LedgerError('Please sign in again.',401);
+  return ledger().forWorkspace(String(account.id));
 }

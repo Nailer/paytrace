@@ -17,6 +17,7 @@ function text(value: unknown, label: string, max: number): string {
 }
 export class Ledger {
   db: Client;
+  workspace = "legacy";
   private ready: Promise<unknown>;
   constructor(path: string, authToken?: string) {
     const remote = /^(libsql|https):\/\//.test(path);
@@ -28,8 +29,40 @@ export class Ledger {
       'CREATE TABLE IF NOT EXISTS funding (id TEXT PRIMARY KEY, data TEXT NOT NULL)',
       'CREATE TABLE IF NOT EXISTS reviews (id TEXT PRIMARY KEY, request_id TEXT NOT NULL, hash TEXT NOT NULL, reason TEXT NOT NULL, at TEXT NOT NULL, resolved INTEGER NOT NULL DEFAULT 0, UNIQUE(request_id,hash))',
       'CREATE TABLE IF NOT EXISTS claims (evidence_id TEXT PRIMARY KEY, owner TEXT NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS ownership (record_id TEXT PRIMARY KEY, kind TEXT NOT NULL, workspace TEXT NOT NULL)',
+      'CREATE INDEX IF NOT EXISTS ownership_workspace ON ownership(workspace,kind)',
+      'CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password TEXT NOT NULL, recovery TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1)',
       'CREATE TABLE IF NOT EXISTS login_limits (key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, expires INTEGER NOT NULL)',
     ], 'write');
+  }
+  forWorkspace(workspace: string) {
+    if (workspace !== 'legacy' && !/^[a-f0-9-]{36}$/.test(workspace)) throw new LedgerError('Invalid workspace.', 401);
+    const scoped = Object.create(this) as Ledger;
+    scoped.workspace = workspace;
+    return scoped;
+  }
+  private scope(kind: 'request' | 'funding', column = 'id') {
+    return `(${column} IN (SELECT record_id FROM ownership WHERE kind='${kind}' AND workspace='${this.workspace}') OR ('${this.workspace}'='legacy' AND ${column} NOT IN (SELECT record_id FROM ownership WHERE kind='${kind}')))`;
+  }
+  private recipientKey() { return this.workspace === 'legacy' ? 'recipient' : `workspace:${this.workspace}:recipient`; }
+  async forTracking(token: string) {
+    if (!/^[a-f0-9]{48}$/.test(token)) throw new LedgerError('Payment link not found.', 404);
+    const row = (await this.query('SELECT ownership.workspace FROM requests LEFT JOIN ownership ON ownership.record_id=requests.id WHERE requests.token=?', [token])).rows[0];
+    if (!row) throw new LedgerError('Payment link not found.', 404);
+    return this.forWorkspace(row.workspace ? String(row.workspace) : 'legacy');
+  }
+  async account(username: string) { return (await this.query('SELECT * FROM accounts WHERE username=?', [username])).rows[0]; }
+  async accountById(id: string) { return (await this.query('SELECT id,name,username,version FROM accounts WHERE id=?', [id])).rows[0]; }
+  async registerAccount(username: string, name: string, password: string, recovery: string) {
+    const id = randomUUID();
+    try { await this.query('INSERT INTO accounts(id,username,name,password,recovery) VALUES (?,?,?,?,?)', [id, username, name, password, recovery]); }
+    catch(e) { if (String(e).includes('UNIQUE')) throw new LedgerError('That username is already taken. Choose another.', 409); throw e; }
+    return { id, name, username, version: 1 };
+  }
+  async recoverAccount(id: string, oldRecovery: string, password: string, recovery: string) {
+    const result = await this.query('UPDATE accounts SET password=?,recovery=?,version=version+1 WHERE id=? AND recovery=?', [password,recovery,id,oldRecovery]);
+    if (result.rowsAffected !== 1) throw new LedgerError('Recovery details are incorrect or already used.', 401);
+    return this.accountById(id);
   }
   private async query(sql: string, args: InValue[] = [], tx?: Transaction) {
     await this.ready;
@@ -43,10 +76,10 @@ export class Ledger {
     finally { tx.close(); }
   }
   async snapshot(): Promise<LedgerSnapshot> {
-    const setting = (await this.query('SELECT value FROM settings WHERE key=?', ['recipient'])).rows[0];
-    return { reviews: (await this.query('SELECT id, request_id AS requestId, hash AS transactionHash, reason, at, resolved FROM reviews WHERE resolved=0 OR id IN (SELECT id FROM reviews WHERE resolved=1 ORDER BY at DESC LIMIT 100) ORDER BY resolved ASC, at DESC')).rows.map(r => ({ id: String(r.id), requestId: String(r.requestId), transactionHash: String(r.transactionHash), reason: String(r.reason), at: String(r.at), resolved: Boolean(r.resolved) })), recipient: setting?.value as string || '', requests: (await this.query('SELECT data FROM requests ORDER BY rowid DESC')).rows.map(r => JSON.parse(r.data as string)), funding: (await this.query('SELECT data FROM funding ORDER BY rowid DESC')).rows.map(r => JSON.parse(r.data as string)) };
+    const setting = (await this.query('SELECT value FROM settings WHERE key=?', [this.recipientKey()])).rows[0];
+    return { workspaceName: this.workspace === 'legacy' ? 'Original workspace' : String((await this.accountById(this.workspace))?.name || 'My workspace'), reviews: (await this.query(`SELECT id, request_id AS requestId, hash AS transactionHash, reason, at, resolved FROM reviews WHERE ${this.scope('request','request_id')} AND (resolved=0 OR id IN (SELECT id FROM reviews WHERE ${this.scope('request','request_id')} AND resolved=1 ORDER BY at DESC LIMIT 100)) ORDER BY resolved ASC, at DESC`)).rows.map(r => ({ id: String(r.id), requestId: String(r.requestId), transactionHash: String(r.transactionHash), reason: String(r.reason), at: String(r.at), resolved: Boolean(r.resolved) })), recipient: setting?.value as string || '', requests: (await this.query(`SELECT data FROM requests WHERE ${this.scope('request')} ORDER BY rowid DESC`)).rows.map(r => JSON.parse(r.data as string)), funding: (await this.query(`SELECT data FROM funding WHERE ${this.scope('funding')} ORDER BY rowid DESC`)).rows.map(r => JSON.parse(r.data as string)) };
   }
-  async setRecipient(value: unknown) { const recipient = address(value); await this.query('INSERT OR REPLACE INTO settings VALUES (?,?)', ['recipient', recipient]); return recipient; }
+  async setRecipient(value: unknown) { const recipient = address(value); await this.query('INSERT OR REPLACE INTO settings VALUES (?,?)', [this.recipientKey(), recipient]); return recipient; }
   async create(input: Record<string, unknown>, afterBlock: number): Promise<RequestRecord> {
     if (!Number.isSafeInteger(afterBlock) || afterBlock < 0) throw new LedgerError('Could not establish the request’s starting block.', 502);
     const recipient = (await this.snapshot()).recipient;
@@ -56,10 +89,10 @@ export class Ledger {
     let amount: string;
     try { if (typeof input.amount !== 'string' || units(input.amount) <= 0n) throw new Error(); amount = decimal(units(input.amount)); } catch { throw new LedgerError('Enter a positive amount with up to six decimal places.'); }
     const row: RequestRecord = { id: `PT-${randomUUID()}`, token: randomBytes(24).toString('hex'), customer: text(input.customer, 'Customer name', 80), description: text(input.description, 'Description', 240), amount, recipient, payer, afterBlock, createdAt: new Date().toISOString(), status: 'awaiting', proof: null, notes: [] };
-    await this.query('INSERT INTO requests VALUES (?,?,?)', [row.id, row.token, JSON.stringify(row)]); return row;
+    await this.atomic(async tx => { await this.query('INSERT INTO requests VALUES (?,?,?)', [row.id, row.token, JSON.stringify(row)],tx); await this.query('INSERT INTO ownership VALUES (?,?,?)',[row.id,'request',this.workspace],tx); }); return row;
   }
   async request(id: string): Promise<RequestRecord> {
-    const row = (await this.query('SELECT data FROM requests WHERE id=?', [id])).rows[0];
+    const row = (await this.query(`SELECT data FROM requests WHERE id=? AND ${this.scope('request')}`, [id])).rows[0];
     if (!row) throw new LedgerError('Payment request not found.', 404);
     return JSON.parse(row.data as string);
   }
@@ -75,21 +108,22 @@ export class Ledger {
     if (proof.outcome !== 'verified' || proof.transfers.length !== 1) throw new LedgerError(proof.summary, 422);
     const transfer = proof.transfers[0];
     if (proof.chainId !== MONAD_TESTNET.chainId || proof.tokenAddress.toLowerCase() !== MONAD_TESTNET.usdc.toLowerCase() || transfer.to !== proof.recipient || units(transfer.amount) !== units(proof.expectedAmount) || proof.receivedAmount !== transfer.amount || proof.blockNumber === null || proof.finalizedThrough === null || proof.blockNumber > proof.finalizedThrough) throw new LedgerError('Inconsistent transfer evidence. Nothing was recorded.', 422);
-    if ((await this.query('SELECT owner FROM claims WHERE evidence_id=?', [transfer.evidenceId], tx)).rows[0]) throw new LedgerError('This transfer is already recorded. It cannot be counted twice.', 409);
-    await this.query('INSERT INTO claims VALUES (?,?)', [transfer.evidenceId, owner], tx);
+    if ((await this.query('SELECT owner FROM claims WHERE evidence_id=?', [this.workspace === 'legacy' ? transfer.evidenceId : `${this.workspace}:${transfer.evidenceId}`], tx)).rows[0]) throw new LedgerError('This transfer is already recorded. It cannot be counted twice.', 409);
+    await this.query('INSERT INTO claims VALUES (?,?)', [this.workspace === 'legacy' ? transfer.evidenceId : `${this.workspace}:${transfer.evidenceId}`, owner], tx);
   }
   async importFunding(proof: ChainProof, label: unknown): Promise<FundingRecord> {
     return this.atomic(async tx => {
-      const setting = (await this.query('SELECT value FROM settings WHERE key=?', ['recipient'], tx)).rows[0];
+      const setting = (await this.query('SELECT value FROM settings WHERE key=?', [this.recipientKey()], tx)).rows[0];
       if (proof.recipient !== setting?.value) throw new LedgerError('The receiving wallet changed. Verify the transfer again.', 409);
       const row = { id: randomUUID(), label: text(label, 'Receipt label', 120), proof, createdAt: new Date().toISOString() };
       await this.claim(proof, row.id, tx);
       await this.query('INSERT INTO funding VALUES (?,?)', [row.id, JSON.stringify(row)], tx);
+      await this.query('INSERT INTO ownership VALUES (?,?,?)', [row.id,'funding',this.workspace], tx);
       return row;
     });
   }
   private async readRequest(id: string, tx: Transaction): Promise<RequestRecord> {
-    const record = (await this.query('SELECT data FROM requests WHERE id=?', [id], tx)).rows[0];
+    const record = (await this.query(`SELECT data FROM requests WHERE id=? AND ${this.scope('request')}`, [id], tx)).rows[0];
     if (!record) throw new LedgerError('Payment request not found.', 404);
     return JSON.parse(String(record.data));
   }
@@ -135,7 +169,7 @@ export class Ledger {
       await this.query('INSERT INTO login_limits VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=attempts+1', [key, now + 15 * 60000], tx);
     });
   }
-  async resolveReview(id: string) { await this.query('UPDATE reviews SET resolved=1 WHERE id=?', [id]); }
+  async resolveReview(id: string) { await this.query(`UPDATE reviews SET resolved=1 WHERE id=? AND ${this.scope('request','request_id')}`, [id]); }
   async note(id: string, value: unknown) {
     const note = { text: text(value, 'Note', 1000), at: new Date().toISOString() };
     return this.atomic(async tx => {

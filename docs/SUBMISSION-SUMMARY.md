@@ -22,7 +22,7 @@ A real historical funding receipt and a fresh 1 test USDC request payment have b
 
 ## Current scope
 
-One merchant workspace, Monad testnet, persistent SQLite ledger and an injected-wallet checkout. This is not a fiat settlement service, multi-tenant SaaS or unattended indexer. Verification retries while checkout is open; a manual hash fallback supports recovery. Deployed on Vercel with persistent Turso storage: https://paytrace-tau.vercel.app. Public source: https://github.com/Nailer/paytrace.
+Independent merchant signup with isolated workspaces, recovery codes, Monad testnet payments, persistent Turso storage and an injected-wallet checkout. Each account has one workspace; team roles and email recovery are not included. This is not a fiat settlement service or unattended indexer. Verification retries while checkout is open; a manual hash fallback supports recovery. Deployed on Vercel with persistent Turso storage: https://paytrace-tau.vercel.app. Public source: https://github.com/Nailer/paytrace.
 
 ## Add only after verified
 

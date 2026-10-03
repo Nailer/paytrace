@@ -1,4 +1,4 @@
-import { requireOperator } from '@/lib/access';
+import { operatorLedger } from '@/lib/access';
 import { ledger, LedgerError } from '@/lib/ledger';
 import { createRpc, VerificationError, verifyTransfer } from '@/lib/chain-verification';
 import { readJson } from '@/lib/local-access';
@@ -6,15 +6,15 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 function failure(e: unknown) { return Response.json({ error: e instanceof LedgerError || e instanceof VerificationError ? e.message : 'The operation could not be completed. Please retry.' }, { status: e instanceof LedgerError || e instanceof VerificationError ? e.status : 500, headers }); }
-export async function GET(request: Request) { try { requireOperator(request); return Response.json((await ledger().snapshot()), { headers }); } catch(e) { return failure(e); } }
+export async function GET(request: Request) { try { const db=await operatorLedger(request); return Response.json((await db.snapshot()), { headers }); } catch(e) { return failure(e); } }
 let active = 0;
 export async function POST(request: Request) {
   let acquired = false;
   try {
-    requireOperator(request);
+    const db=await operatorLedger(request);
     if (active >= 3) throw new LedgerError('The ledger is busy. Please retry shortly.', 429);
     active++; acquired = true;
-    const body = await readJson(request), db = ledger();
+    const body = await readJson(request);
     switch(body.action) {
       case 'settings': (await db.setRecipient(body.recipient)); break;
       case 'create': {
