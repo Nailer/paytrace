@@ -4,7 +4,7 @@ PayTrace supports Vercel with a remote Turso database, or a persistent Node 24 h
 
 ## Vercel deployment
 
-1. Link this working branch to a Vercel project. Do not deploy the old prototype from `main`.
+1. Link the current release to a Vercel project.
 2. Add the Turso Cloud integration with its Starter plan and connect it to Production. The account owner must accept the marketplace terms. For production, use a dedicated resource with the `PAYTRACE_PROD_` prefix. It supplies `PAYTRACE_PROD_TURSO_DATABASE_URL` and `PAYTRACE_PROD_TURSO_AUTH_TOKEN`; these take precedence over the generic Turso variables. Keep development and preview resources separate.
 3. Set `PAYTRACE_PUBLIC_ORIGIN` to the production HTTPS alias, and configure `PAYTRACE_PASSWORD_HASH` and `PAYTRACE_SESSION_SECRET` using the credential generator below. Never prefix these with `NEXT_PUBLIC_`.
 4. Deploy using Node 24. On Vercel, missing remote database configuration or public origin fails closed; no temporary local ledger is created.
@@ -32,9 +32,9 @@ This creates two private files, both excluded from Git: `.env.hosting` with serv
 
 6. Copy values from `.env.hosting` into the host's private environment settings. Set the public origin to the exact HTTPS origin without a trailing slash. The session secret must remain server-only.
 7. Deploy. The container refuses to start without required authentication and database settings. The reverse proxy must preserve the actual public Host header and terminate HTTPS.
-8. Open `/login`, sign in and save the receiving wallet. Test the checkout in a separate signed-out browser: it should work with its unguessable link while `/api/ledger` remains unauthorized.
+8. Open `/signup` to create a merchant account, save its recovery code, then save the receiving wallet. The original operator workspace uses `/owner` and the generated password. Test the checkout in a separate signed-out browser: it should work with its unguessable link while `/api/ledger` remains unauthorized.
 
-This is one operator workspace, not a multi-user SaaS. Add external edge throttling and monitoring for wider public usage; the built-in budgets are per process. A password rotation also needs a new session secret to revoke existing signed sessions. Sessions otherwise expire in eight hours.
+Each merchant account owns one isolated workspace. Account recovery rotates its recovery code and revokes its existing sessions. There is no email recovery or team membership yet. Add external edge throttling and monitoring for wider public usage. Rotating the original owner password also needs a new session secret to revoke legacy sessions; this signs out all accounts. Sessions otherwise expire in eight hours.
 
 ## Database and backups
 

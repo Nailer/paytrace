@@ -50,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-39 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
+42 tests cover wallet calldata and account checks, session integrity, API/private data boundaries, exact reconciliation, database restart persistence, uniqueness, cancellation, review behavior and CSV safety. A production HTTP acceptance check also used live RPC evidence to confirm that an old real transfer cannot pay a new request, and that the rejection appears in the review inbox.
 
 A fresh 1 test USDC transfer has now been matched to its prepared request and independently rechecked against the live RPC. The Vercel deployment passes hosted sign-in, database writes, checkout privacy, historical-transfer rejection and cancellation checks. Desktop dashboard and mobile checkout have been visually inspected. A fresh hosted wallet payment and final demo video remain user recording steps. Do not represent mocked test RPC fixtures as live payment evidence.
 
@@ -60,7 +60,7 @@ A fresh 1 test USDC transfer has now been matched to its prepared request and in
 - [Public transaction verifier](https://paytrace-tau.vercel.app/verify)
 - [User guide](https://paytrace-tau.vercel.app/guide)
 
-Merchant access requires the owner’s workspace password. Customer checkout links and the verifier are public. Judges can inspect the source and verifier without credentials; arrange private merchant access with the owner for a full write walkthrough.
+Anyone can create a merchant account at `/signup`, save their recovery code and set up a receiving wallet in `/workspace`. Each account has an isolated workspace. Customer checkout links and the verifier remain public. The original owner workspace is preserved at `/owner` with its existing password.
 
 ## Deploy and demonstrate
 
@@ -73,10 +73,16 @@ Merchant access requires the owner’s workspace password. Customer checkout lin
 
 ## Current boundaries
 
-Monad **testnet only**. No real-money bank payouts, fiat conversion, automatic refunds, multi-tenant organization accounts or unattended chain indexer. Customer verification runs while checkout is open, with a four-minute retry window; the transaction hash is retained locally where storage is available. Merchant status refreshes every 15 seconds. Vercel deployment uses remote Turso storage; a persistent single-process host can use local SQLite. Verification rate budgets remain per process.
+Monad **testnet only**. No real-money bank payouts, fiat conversion, automatic refunds, team invitations or organization roles or unattended chain indexer. Customer verification runs while checkout is open, with a four-minute retry window; the transaction hash is retained locally where storage is available. Merchant status refreshes every 15 seconds. Vercel deployment uses remote Turso storage; a persistent single-process host can use local SQLite. Verification rate budgets remain per process.
 
 Hosted links are shareable only after actual HTTPS deployment. Anyone with a checkout token can see its description, amount, wallet addresses and receipt; customer names and internal notes are omitted. Wallet signing needs an injected EIP-1193 provider. The in-app preview browser may have no wallet extension; use a supported browser or manual transfer/hash verification.
 
 The RPC provider supplies the chain evidence; this app is not an independently validating consensus client. Test tokens have no monetary value, and receipt onchain does not mean bank settlement.
 
 References: [Monad testnet](https://docs.monad.xyz/developer-essentials/testnet), [Circle USDC](https://www.circle.com/blog/now-available-usdc-cctp-wallets-and-contracts-on-monad), [EIP-1193 wallet API](https://eips.ethereum.org/EIPS/eip-1193), [EIP-3085 chain configuration](https://eips.ethereum.org/EIPS/eip-3085).
+
+## Accounts and isolation
+
+Accounts use unique usernames and salted password hashes. Signup returns a private recovery code once; store it outside PayTrace. Recovery rotates that code and invalidates previous sessions. No email verification or email recovery is offered. A merchant account owns one workspace. Requests, funding, notes, reviews and wallet settings are scoped on the server, never by a workspace ID from the client. Public checkout tokens expose only customer-facing fields and resolve their owning workspace internally. Duplicate evidence is prevented within each workspace; another account cannot reserve a public transfer to block its legitimate owner.
+
+Existing records remain in the original workspace. New-account registration does not claim them. This is an initial multi-merchant testnet release, not an audited production payments service. No team permissions, email delivery or platform-wide abuse protection beyond current request budgets are claimed.

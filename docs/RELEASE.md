@@ -6,7 +6,7 @@ Public source: https://github.com/Nailer/paytrace
 ## Delivered and verified
 
 - Vercel production deployment with remote Turso storage and private operator login.
-- 39 automated tests and successful production build; GitHub CI passed for implementation commit afba397.
+- 42 automated tests and successful production build; GitHub CI passed for implementation commit afba397.
 - Hosted login returns 200, unauthenticated ledger returns 401, cross-origin write returns 403.
 - Receiving wallet saved in the hosted database and loaded by the live dashboard.
 - Real earlier 1 test USDC transfer verified on the hosted service and saved as historical funding.
@@ -24,4 +24,8 @@ Confirm the official submission portal's exact eligibility, deadline/timezone an
 
 ## Scope and limits
 
-Single merchant workspace; Monad testnet USDC only. No fiat settlement, refunds, multi-tenant accounts, cross-chain support or unattended indexer. Checkout verifies while open and supports manual hash recovery. Verification budgets remain per instance; wider exposure requires platform rate controls. Docker is an alternative packaging option, not the deployed or container-tested route. Merchant password must remain private; arrange judge access separately from public checkout.
+Independent merchant accounts with one workspace per account; Monad testnet USDC only. No fiat settlement, refunds, team roles, cross-chain support or unattended indexer. Checkout verifies while open and supports manual hash recovery. Verification budgets remain per instance; wider exposure requires platform rate controls. Docker is an alternative packaging option, not the deployed or container-tested route. Merchant password must remain private; arrange judge access separately from public checkout.
+
+## Merchant onboarding release
+
+Adds public landing page, signup, username/password sign-in, private recovery-code reset, workspace naming and wallet setup. The existing owner workspace remains accessible at `/owner`. Additive ownership/account tables preserve existing records. Tests include cross-workspace read/write denial, public checkout ownership resolution, recovery-code rotation and old-session invalidation.

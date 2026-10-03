@@ -7,5 +7,5 @@ import '@fontsource/manrope/500.css';
 import '@fontsource/manrope/600.css';
 import '@fontsource/manrope/700.css';
 import './globals.css';
-export const metadata: Metadata = { title: 'PayTrace — Every payment, accounted for.', description: 'Follow payments from first transfer to final payout. A Monad payment operations workspace.' };
+export const metadata: Metadata = { title: 'PayTrace — Every payment, accounted for.', description: 'Create your own Monad payment workspace. Request test USDC, share checkout links and keep verified receipts.' };
 export default function RootLayout({ children }: { children: React.ReactNode }) { return <html lang="en"><body>{children}</body></html>; }
