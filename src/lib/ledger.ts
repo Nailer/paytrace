@@ -32,6 +32,8 @@ export class Ledger {
       'CREATE TABLE IF NOT EXISTS ownership (record_id TEXT PRIMARY KEY, kind TEXT NOT NULL, workspace TEXT NOT NULL)',
       'CREATE INDEX IF NOT EXISTS ownership_workspace ON ownership(workspace,kind)',
       'CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password TEXT NOT NULL, recovery TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1)',
+      'CREATE TABLE IF NOT EXISTS auth_challenges (id TEXT PRIMARY KEY, message TEXT NOT NULL, binding TEXT NOT NULL, expires INTEGER NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS wallet_accounts (wallet TEXT PRIMARY KEY, account_id TEXT NOT NULL UNIQUE)',
       'CREATE TABLE IF NOT EXISTS login_limits (key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, expires INTEGER NOT NULL)',
     ], 'write');
   }
@@ -64,6 +66,27 @@ export class Ledger {
     if (result.rowsAffected !== 1) throw new LedgerError('Recovery details are incorrect or already used.', 401);
     return this.accountById(id);
   }
+  async saveChallenge(id: string, message: string, binding: string, expires: number) {
+    await this.atomic(async tx => {
+      await this.query('DELETE FROM auth_challenges WHERE expires<=?', [Date.now()], tx);
+      await this.query('INSERT INTO auth_challenges VALUES (?,?,?,?)', [id,message,binding,expires], tx);
+    });
+  }
+  async challenge(id: string, binding: string) {
+    return (await this.query('SELECT message,expires FROM auth_challenges WHERE id=? AND binding=? AND expires>?', [id,binding,Date.now()])).rows[0];
+  }
+  async finishWalletSignIn(id: string, binding: string, wallet: string) {
+    return this.atomic(async tx => {
+      const used = await this.query('DELETE FROM auth_challenges WHERE id=? AND binding=? AND expires>?', [id,binding,Date.now()], tx);
+      if (used.rowsAffected!==1) throw new LedgerError('This sign-in expired or was already used. Please try again.',401);
+      const existing = (await this.query('SELECT accounts.id,accounts.version FROM wallet_accounts JOIN accounts ON accounts.id=wallet_accounts.account_id WHERE wallet=?', [wallet], tx)).rows[0];
+      if (existing) return {id:String(existing.id),version:Number(existing.version)};
+      const accountId=randomUUID();
+      await this.query('INSERT INTO accounts(id,username,name,password,recovery) VALUES (?,?,?,?,?)',[accountId,`wallet:${wallet}`,`Workspace ${wallet.slice(0,6)}…${wallet.slice(-4)}`,'disabled',randomBytes(32).toString('hex')],tx);
+      await this.query('INSERT INTO wallet_accounts VALUES (?,?)',[wallet,accountId],tx);
+      return {id:accountId,version:1};
+    });
+  }
   private async query(sql: string, args: InValue[] = [], tx?: Transaction) {
     await this.ready;
     return (tx ?? this.db).execute({ sql, args });
@@ -82,7 +105,7 @@ export class Ledger {
   async setRecipient(value: unknown) { const recipient = address(value); await this.query('INSERT OR REPLACE INTO settings VALUES (?,?)', [this.recipientKey(), recipient]); return recipient; }
   async create(input: Record<string, unknown>, afterBlock: number): Promise<RequestRecord> {
     if (!Number.isSafeInteger(afterBlock) || afterBlock < 0) throw new LedgerError('Could not establish the request’s starting block.', 502);
-    const recipient = (await this.snapshot()).recipient;
+    const recipient = input.recipient === undefined ? (await this.snapshot()).recipient : address(input.recipient);
     if (!recipient) throw new LedgerError('Save your receiving wallet first.');
     const payer = address(input.payer);
     if (payer === recipient) throw new LedgerError('The payer must be a different wallet from the receiving wallet.');

@@ -14,7 +14,7 @@ export function LiveWorkspace({isHosted=false}:{isHosted?:boolean}) {
   const editor = useRef<HTMLElement>(null);
   useEffect(() => { if (panel) editor.current?.querySelector<HTMLInputElement>('input')?.focus(); }, [panel]);
   const [view, setView] = useState<'requests' | 'funding' | 'reviews'>('requests');
-  async function refresh(clear = true) { if(clear) setError(''); try { const res = await fetch('/api/ledger', { cache: 'no-store' }); if(res.status===401){location.assign('/login');return;} const payload = await res.json(); if (!res.ok) throw new Error(payload.error); setData(payload); } catch(e) { setError(e instanceof Error ? e.message : 'Could not load the ledger.'); } }
+  async function refresh(clear = true) { if(clear) setError(''); try { const res = await fetch('/api/ledger', { cache: 'no-store' }); if(res.status===401){location.assign('/start');return;} const payload = await res.json(); if (!res.ok) throw new Error(payload.error); setData(payload); } catch(e) { setError(e instanceof Error ? e.message : 'Could not load the ledger.'); } }
   useEffect(() => { void refresh(); const timer=setInterval(()=>void refresh(false),15000);return()=>clearInterval(timer); }, []);
   async function act(payload: Record<string, unknown>, message: string) {
     setBusy(true); setError(''); setNotice('');
