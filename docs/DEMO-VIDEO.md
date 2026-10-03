@@ -4,6 +4,8 @@ Record the working `/` workspace and a real customer checkout. Do not use `/demo
 
 ## Preparation
 
+The wallet payment scene is recorded by the owner; see [Recording the wallet payment segment](DEMO-WALLET-SEGMENT.md) for the shot list and handoff rules.
+
 - Keep the production build running (`npm run build`, then `npm start`).
 - Use a browser with your Ethereum-compatible wallet. The in-app preview may not contain a wallet provider.
 - Have two accounts: a receiving wallet and a payer wallet with test USDC and enough test MON for gas.
