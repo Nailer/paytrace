@@ -1,3 +1,34 @@
 import Link from 'next/link';
-import {ArrowUpRight, CheckCircle2, ShieldCheck, Wallet, FileCheck2} from 'lucide-react';
-export default function Home(){return <main className="marketing"><nav><Link className="verify-brand" href="/">paytrace.</Link><div><Link href="/guide">How it works</Link><Link href="/login">Sign in</Link><Link className="button primary" href="/start">Get started<ArrowUpRight size={16}/></Link></div></nav><section className="marketing-hero"><div><span className="eyebrow">PAYMENTS WITH A PAPER TRAIL</span><h1>Good work.<br/>Clear payments.</h1><p>Your own workspace to request test USDC, share a checkout, and turn an onchain transfer into a receipt you can trust.</p><div className="marketing-actions"><Link className="button primary" href="/start">Prepare a payment request<ArrowUpRight size={18}/></Link><Link href="/verify">Verify a transaction →</Link></div><small>Monad testnet · Explore and prepare a request without signing in</small></div><aside className="marketing-preview"><span className="eyebrow">FROM REQUEST TO RECEIPT</span><div><span className="checkout-icon"><FileCheck2/></span><h2>Every detail.<br/>Accounted for.</h2><p>One link for your customer. One clear record for you.</p></div><ol><li><span>01</span><div><strong>Create a request</strong><p>Set the amount and expected wallets.</p></div></li><li><span>02</span><div><strong>Share your checkout</strong><p>Your customer pays from their wallet.</p></div></li><li><CheckCircle2/><div><strong>Keep the verified receipt</strong><p>We check the actual chain evidence.</p></div></li></ol></aside></section><section className="marketing-features"><article><ShieldCheck/><h2>A workspace of your own.</h2><p>Your requests, notes and receiving wallet stay separate from other merchants.</p></article><article><Wallet/><h2>Your customers stay in control.</h2><p>No customer account or token allowance. Transfers go directly between wallets.</p></article><article><FileCheck2/><h2>Evidence, not guesswork.</h2><p>Check the token, amount, sender, recipient and finalization before recording a payment.</p></article></section><footer><span>paytrace. Clarity in every transfer.</span><span>Testnet only. Test tokens have no monetary value.</span></footer></main>}
+import { ArrowUpRight, CheckCircle2, ShieldCheck, Wallet, FileCheck2, Link2 } from 'lucide-react';
+
+export default function Home() {
+  return <main className="marketing">
+    <nav aria-label="Main navigation"><Link className="verify-brand" href="/">paytrace.</Link><div><Link href="/guide">How it works</Link><Link href="/login">Sign in</Link><Link className="button primary" href="/start">Get started<ArrowUpRight size={16}/></Link></div></nav>
+    <section className="marketing-hero clear-hero">
+      <div>
+        <span className="eyebrow">USDC PAYMENT TRACKING FOR FREELANCERS & BUSINESSES</span>
+        <h1>Send a payment link.<br/><span>Know when you’re paid.</span></h1>
+        <p className="hero-explanation">PayTrace lets you request USDC, share a checkout link, and verify that the right payment reached your wallet—with a receipt for you and your customer.</p>
+        <div className="hero-network"><span/>Live on Monad testnet · Test USDC only</div>
+        <div className="marketing-actions"><Link className="button primary" href="/start">Create a payment request<ArrowUpRight size={18}/></Link><Link href="/verify">Check a transaction →</Link></div>
+        <small className="hero-access">Start without an account. Sign in with your wallet when you’re ready to save.</small>
+      </div>
+      <aside className="marketing-preview hero-flow" aria-label="How a PayTrace payment works">
+        <span className="eyebrow">HOW IT WORKS</span>
+        <h2>From “please pay”<br/>to proof of payment.</h2>
+        <ol>
+          <li><span className="hero-step"><Link2 size={19}/></span><div><strong>1. You send a payment link</strong><p>Choose the amount, your receiving wallet and the customer’s wallet.</p></div></li>
+          <li><span className="hero-step"><Wallet size={19}/></span><div><strong>2. Your customer pays</strong><p>They open the link and send USDC directly to you. No customer account needed.</p></div></li>
+          <li><span className="hero-step"><CheckCircle2 size={19}/></span><div><strong>3. PayTrace checks the transfer</strong><p>The right token, wallets and amount must match before it’s marked received.</p></div></li>
+        </ol>
+        <div className="hero-outcome"><FileCheck2 size={22}/><div><strong>A verified receipt. A clear payment record.</strong><p>See what’s paid, what’s pending and what needs review.</p></div></div>
+      </aside>
+    </section>
+    <section className="marketing-features" aria-label="Why use PayTrace">
+      <article><ShieldCheck/><h2>Stop chasing payment screenshots.</h2><p>Check the actual transfer on Monad and keep the evidence with the payment request.</p></article>
+      <article><Wallet/><h2>Payments go straight to your wallet.</h2><p>PayTrace never holds your funds. Your customer approves the transfer in their own wallet.</p></article>
+      <article><FileCheck2/><h2>Keep your records in one place.</h2><p>Track requests, add private notes, download receipts and export your payment ledger.</p></article>
+    </section>
+    <footer><span>paytrace. Clarity in every transfer.</span><span>Testnet only. Test tokens have no monetary value.</span></footer>
+  </main>;
+}
