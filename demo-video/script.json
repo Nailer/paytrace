@@ -1,0 +1,16 @@
+{
+"s01":"You send an invoice. A crypto payment lands in your wallet. But who sent it? Which invoice does it pay? Is the amount right, and is it final? Today, people answer that with screenshots and guesswork.",
+"s02":"PayTrace fixes that on Monad. You create a payment link, your customer pays in USDC from their own wallet, and PayTrace proves the payment on-chain.",
+"s03":"This is the live merchant workspace. First, the merchant saves the wallet that should receive payments. PayTrace never holds funds or private keys.",
+"s04":"Next, create a payment request: the customer, what it's for, the exact amount, one test USDC, and the wallet that is expected to pay.",
+"s05":"The request is saved as awaiting payment, and it gets its own checkout link to share with the customer.",
+"s06":"This is what the customer sees: the amount, a request reference, the receiving wallet, and a simple journey showing what happens next.",
+"s07":"The customer clicks Pay with your wallet. MetaMask opens a direct USDC transfer on Monad Testnet. No token approvals, no middleman. They confirm.",
+"s08":"Now PayTrace checks the chain: the official USDC contract, the sender, the recipient, the exact amount, and that the block is final. About ten seconds after approval: received, verified, recorded.",
+"s09":"The customer gets a receipt with downloadable evidence. And anyone can confirm it on the Monad explorer: one USDC, from the expected payer, to the merchant.",
+"s10":"Back in the workspace, the request updated on its own to verified received, with a link to the transaction and an evidence file. No screenshots. No spreadsheets.",
+"s11":"There's also a public verifier. Paste any transaction hash, the recipient and the amount you expect, and PayTrace checks the real chain data. No wallet connection needed.",
+"s12":"What makes PayTrace different is what it refuses to do. A wrong amount, a wrong sender, or an old transfer can never mark a request as paid. It goes to a review inbox instead. And one transfer can never pay two requests.",
+"s13":"Monad makes this practical. Payments are verified seconds after they are sent, for a fraction of a cent in gas. That fast, low-cost finality is exactly what everyday stablecoin payments need, for freelancers, shops and businesses building on Monad.",
+"s14":"PayTrace is live on Monad testnet today: merchant workspace, customer checkout, receipts, CSV export, a public verifier and an in-app guide, backed by thirty-nine automated tests. PayTrace. Every payment, accounted for."
+}

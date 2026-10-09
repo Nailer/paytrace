@@ -1,0 +1,169 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:M;src:url(fonts/manrope-latin-500-normal.ttf);font-weight:500}
+@font-face{font-family:M;src:url(fonts/manrope-latin-600-normal.ttf);font-weight:600}
+@font-face{font-family:M;src:url(fonts/manrope-latin-700-normal.ttf);font-weight:700}
+@font-face{font-family:M;src:url(fonts/manrope-latin-800-normal.ttf);font-weight:800}
+@font-face{font-family:D;src:url(fonts/dm-sans-latin-400-normal.ttf);font-weight:400}
+@font-face{font-family:D;src:url(fonts/dm-sans-latin-500-normal.ttf);font-weight:500}
+@font-face{font-family:D;src:url(fonts/dm-sans-latin-700-normal.ttf);font-weight:700}
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;overflow:hidden}
+body{font-family:D;color:#273d36;background:radial-gradient(ellipse at 85% 0%,#e3eedb 0,transparent 50%),radial-gradient(ellipse at 0% 100%,#e9f1e4 0,transparent 45%),#f7f9f4}
+.card{position:absolute;inset:0;padding:90px 150px;display:none;flex-direction:column;justify-content:center}
+.card.on{display:flex}
+.logo{font:700 44px M;letter-spacing:-2px;color:#284f39}.logo span{color:#68a17b}
+.eyebrow{font:700 20px M;letter-spacing:4px;text-transform:uppercase;color:#68a17b;margin-bottom:28px}
+h1{font:700 88px/1.08 M;letter-spacing:-3.5px;color:#1f4532}
+h1 em{font-style:normal;color:#68a17b}
+h2{font:700 64px/1.1 M;letter-spacing:-2.5px;color:#1f4532}
+p.lead{font-size:32px;line-height:1.5;color:#5f7660;margin-top:30px;max-width:1300px}
+.hide{visibility:hidden}
+/* hook */
+.q{font:600 54px/1.25 M;letter-spacing:-1.5px;color:#1f4532;margin-top:22px;display:flex;gap:26px;align-items:center}
+.q i{font-style:normal;width:62px;height:62px;border-radius:50%;background:#fdf1dc;color:#a27825;display:grid;place-items:center;font:800 34px M;flex-shrink:0}
+.notif{position:absolute;right:170px;top:250px;width:560px;background:#fff;border-radius:26px;box-shadow:0 30px 80px #1f45321f;padding:34px 38px;border:1px solid #e3e9dc}
+.notif small{font:600 18px M;letter-spacing:2px;color:#8a9a85;text-transform:uppercase}
+.notif b{display:block;font:700 54px M;color:#1f4532;margin:14px 0 6px;letter-spacing:-1.5px}
+.notif span{font-size:22px;color:#7b8f6c;font-family:monospace}
+.shots{position:absolute;right:210px;top:580px;display:flex;gap:18px}
+.shot{width:150px;height:200px;border-radius:16px;background:#fff;border:2px dashed #d4ddc9;display:grid;place-items:center;font:600 18px M;color:#a5b39c;transform:rotate(-4deg)}
+.shot:nth-child(2){transform:rotate(3deg)}.shot:nth-child(3){transform:rotate(-2deg)}
+/* flow */
+.flow{display:flex;align-items:stretch;gap:0;margin-top:70px}
+.step{flex:1;background:#fff;border:1px solid #e1e8da;border-radius:28px;padding:42px 40px;box-shadow:0 20px 60px #1f45320d}
+.step .n{width:64px;height:64px;border-radius:18px;background:#eaf3ed;color:#237a62;display:grid;place-items:center;font:800 30px M;margin-bottom:28px}
+.step h3{font:700 34px/1.2 M;color:#1f4532;letter-spacing:-1px}
+.step p{font-size:24px;line-height:1.5;color:#6f846c;margin-top:14px}
+.arrow{width:90px;display:grid;place-items:center;color:#68a17b;font:700 54px M}
+.step.hl{background:#237a62;border-color:#237a62}.step.hl h3{color:#fff}.step.hl p{color:#d3eadc}.step.hl .n{background:#ffffff26;color:#fff}
+/* rules */
+.rules{display:grid;grid-template-columns:1fr 1fr 1fr;gap:34px;margin-top:64px}
+.rule{background:#fff;border:1px solid #e1e8da;border-radius:28px;padding:44px 40px;box-shadow:0 20px 60px #1f45320d}
+.rule .ic{font:800 40px M;width:76px;height:76px;border-radius:20px;display:grid;place-items:center;margin-bottom:30px}
+.rule.r .ic{background:#fcf5e7;color:#a27825}.rule.g .ic{background:#eaf3ed;color:#237a62}
+.rule h3{font:700 36px/1.2 M;color:#1f4532;letter-spacing:-1px}
+.rule p{font-size:25px;line-height:1.5;color:#6f846c;margin-top:16px}
+.tag{display:inline-block;margin-top:22px;padding:10px 18px;border-radius:30px;font:700 20px M}
+.tag.a{background:#fcf5e7;color:#a27825}.tag.t{background:#eaf3ed;color:#237a62}
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:34px;margin-top:64px}
+.stat{background:#fff;border:1px solid #e1e8da;border-radius:28px;padding:46px 42px;box-shadow:0 20px 60px #1f45320d}
+.stat b{display:block;font:800 92px/1 M;letter-spacing:-4px;color:#237a62}
+.stat b small{font-size:44px;letter-spacing:-1px}
+.stat h3{font:700 30px/1.25 M;color:#1f4532;margin-top:24px;letter-spacing:-.6px}
+.stat p{font-size:22px;line-height:1.5;color:#7b8f6c;margin-top:12px}
+.monad{display:inline-flex;align-items:center;gap:16px;font:700 26px M;color:#5b4ad6;background:#efedfd;padding:12px 24px;border-radius:40px;margin-bottom:30px;align-self:flex-start}
+.monad i{width:22px;height:22px;border-radius:7px;background:#6e54ff;transform:rotate(45deg)}
+/* built */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:56px}
+.feat{background:#fff;border:1px solid #e1e8da;border-radius:22px;padding:30px 30px;font:700 27px/1.25 M;color:#1f4532;letter-spacing:-.5px}
+.feat span{display:block;font:400 21px/1.45 D;color:#7b8f6c;margin-top:10px;letter-spacing:0}
+.foot{margin-top:64px;display:flex;align-items:center;gap:30px;font:600 28px M;color:#284f39}
+.pill{background:#237a62;color:#fff;padding:16px 30px;border-radius:40px}
+/* end */
+.end{align-items:center;justify-content:center;text-align:center}
+.end .logo{font-size:150px;letter-spacing:-7px}
+.end .tag2{font:600 52px M;color:#1f4532;letter-spacing:-1.5px;margin-top:20px}
+.end .url{margin-top:70px;font:700 36px M;color:#fff;background:#237a62;padding:22px 46px;border-radius:60px}
+.end .sub{margin-top:30px;font-size:26px;color:#7b8f6c}
+/* step chip overlay */
+body.overlay{background:transparent}
+.chip{position:absolute;left:40px;top:34px;display:none;align-items:center;gap:18px;background:#1f4532ee;color:#fff;padding:16px 30px 16px 16px;border-radius:50px;font:700 30px M;letter-spacing:-.5px;box-shadow:0 12px 40px #0003}
+.chip.on{display:flex}
+.chip i{font-style:normal;background:#68a17b;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font:800 26px M}
+.badge{position:absolute;right:46px;top:34px;display:none;align-items:center;gap:14px;background:#fff;color:#237a62;padding:16px 28px;border-radius:50px;font:800 34px M;box-shadow:0 12px 40px #0002;border:3px solid #237a62}
+.badge.on{display:flex}
+</style></head><body>
+
+<section class="card" id="hook">
+  <div class="eyebrow">The problem</div>
+  <h1>You got paid.<br><em>But by whom?</em></h1>
+  <div style="margin-top:44px">
+    <div class="q s1"><i>?</i>Which invoice does it pay?</div>
+    <div class="q s2"><i>?</i>Is the amount right?</div>
+    <div class="q s3"><i>?</i>Is it final?</div>
+  </div>
+  <div class="notif"><small>Incoming transfer</small><b>+ 1.00 USDC</b><span>from 0xEfD0…11aBA</span></div>
+  <div class="shots s4"><div class="shot">screenshot</div><div class="shot">screenshot</div><div class="shot">screenshot</div></div>
+</section>
+
+<section class="card" id="intro">
+  <div class="logo">paytrace<span>.</span></div>
+  <h2 style="margin-top:44px">Every payment, <span style="color:#68a17b">accounted for.</span></h2>
+  <div class="flow">
+    <div class="step"><div class="n">1</div><h3>Create a payment link</h3><p>Exact amount, purpose and expected payer.</p></div>
+    <div class="arrow f2">→</div>
+    <div class="step f2"><div class="n">2</div><h3>Customer pays in USDC</h3><p>Straight from their own wallet. No account needed.</p></div>
+    <div class="arrow f3">→</div>
+    <div class="step hl f3"><div class="n">3</div><h3>Verified on Monad</h3><p>Proven on-chain, then recorded with a receipt.</p></div>
+  </div>
+</section>
+
+<section class="card" id="rules">
+  <div class="eyebrow">What makes PayTrace different</div>
+  <h2>It refuses to guess.</h2>
+  <div class="rules">
+    <div class="rule r"><div class="ic">!</div><h3>Wrong amount, sender or an old transfer</h3><p>Never marks a request paid.</p><span class="tag a">→ Needs review</span></div>
+    <div class="rule g r2"><div class="ic">1</div><h3>One transfer, one request</h3><p>A transfer can never be counted twice or pay two requests.</p><span class="tag t">Enforced by a unique claim</span></div>
+    <div class="rule g r3"><div class="ic">✓</div><h3>Non-custodial</h3><p>Funds go wallet to wallet. PayTrace never holds money or keys.</p><span class="tag t">Evidence, not custody</span></div>
+  </div>
+</section>
+
+<section class="card" id="monad">
+  <div class="monad"><i></i>Built on Monad</div>
+  <h2>Fast finality makes payments feel instant.</h2>
+  <div class="stats">
+    <div class="stat"><b>~10<small> s</small></b><h3>From wallet approval to verified</h3><p>Measured in this demo, including finalization.</p></div>
+    <div class="stat s2"><b>&lt;$0.01</b><h3>Network fee for the transfer</h3><p>0.0086 MON shown by MetaMask on Monad Testnet.</p></div>
+    <div class="stat s3"><b>EVM</b><h3>Standard USDC and wallets</h3><p>Circle's test USDC and MetaMask work as-is.</p></div>
+  </div>
+</section>
+
+<section class="card" id="built">
+  <div class="eyebrow">What we built · live on Monad testnet</div>
+  <h2>A complete payment trail.</h2>
+  <div class="grid">
+    <div class="feat">Merchant workspace<span>Requests, status, internal notes</span></div>
+    <div class="feat">Customer checkout<span>Pay with wallet or paste a hash</span></div>
+    <div class="feat">On-chain verification<span>Token, wallets, amount, finality</span></div>
+    <div class="feat">Receipts &amp; evidence<span>Printable receipt, JSON proof</span></div>
+    <div class="feat">Review inbox<span>Mismatches explained, never paid</span></div>
+    <div class="feat">Public verifier<span>Check any transfer, no wallet</span></div>
+    <div class="feat">CSV export<span>Ledger for your records</span></div>
+    <div class="feat">39 automated tests<span>Reconciliation, safety, storage</span></div>
+  </div>
+  <div class="foot"><span class="pill">paytrace-tau.vercel.app</span><span>Next.js · Monad RPC · Turso</span></div>
+</section>
+
+<section class="card" id="mmside" style="padding-right:960px">
+  <div class="monad"><i></i>Monad Testnet</div>
+  <h2 style="font-size:58px">The customer approves in their own wallet.</h2>
+  <div style="margin-top:44px;display:flex;flex-direction:column;gap:22px">
+    <div class="q" style="font-size:34px;margin:0"><i style="background:#eaf3ed;color:#237a62;width:52px;height:52px;font-size:26px">✓</i>Direct USDC transfer</div>
+    <div class="q" style="font-size:34px;margin:0"><i style="background:#eaf3ed;color:#237a62;width:52px;height:52px;font-size:26px">✓</i>No token approval, no middleman</div>
+    <div class="q" style="font-size:34px;margin:0"><i style="background:#eaf3ed;color:#237a62;width:52px;height:52px;font-size:26px">✓</i>Network fee 0.0086 MON</div>
+  </div>
+</section>
+<section class="card end" id="end">
+  <div class="logo">paytrace<span>.</span></div>
+  <div class="tag2">Every payment, accounted for.</div>
+  <div class="url">paytrace-tau.vercel.app</div>
+  <div class="sub">Built for the Monad hackathon · Monad testnet · test USDC</div>
+</section>
+
+<div class="chip" id="chip"><i id="chipn">1</i><span id="chipt"></span></div>
+<div class="badge" id="badge">✓ <span id="badget"></span></div>
+
+<script>
+const q=new URLSearchParams(location.search);
+const card=q.get('card');
+if(card){document.getElementById(card).classList.add('on');
+  const hide=(q.get('hide')||'').split(',').filter(Boolean);
+  for(const h of hide)document.querySelectorAll('#'+card+' .'+h).forEach(e=>e.classList.add('hide'));}
+if(q.get('chip')){document.body.classList.add('overlay');const c=document.getElementById('chip');c.classList.add('on');
+  document.getElementById('chipn').textContent=q.get('n');document.getElementById('chipt').textContent=q.get('chip');}
+if(q.get('badge')){document.body.classList.add('overlay');document.getElementById('badge').classList.add('on');document.getElementById('badget').textContent=q.get('badge');}
+</script>
+</body></html>
