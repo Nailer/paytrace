@@ -1,7 +1,7 @@
 import textwrap, subprocess, os
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 W,H=1920,1080
-BG=(248,248,245); G=(42,92,69); DK=(30,50,40); MU=(95,110,100)
+BG=(14,20,17); G=(88,200,150); DK=(236,242,238); MU=(140,160,150)
 def F(sz,b=False):
     for p in (['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'] if b else ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']):
         if os.path.exists(p): return ImageFont.truetype(p,sz)
@@ -9,10 +9,10 @@ def F(sz,b=False):
 photo=Image.open('photo.webp').convert('RGB')
 def circ(im,d):
     im=ImageOps.fit(im,(d,d)); m=Image.new('L',(d,d),0); ImageDraw.Draw(m).ellipse((0,0,d,d),fill=255); out=Image.new('RGBA',(d,d)); out.paste(im,(0,0),m); return out
-shots={k:Image.open(k+'.png').convert('RGB') for k in ('home','verify','guide')}
+shots={k:Image.open(k+'_d.png').convert('RGB') for k in ('home','verify','guide')}
 def shot(k,w=1000):
     im=shots[k]; h=int(im.height*w/im.width); im=im.resize((w,h)); 
-    bd=Image.new('RGB',(w+8,h+8),(210,218,212)); bd.paste(im,(4,4)); return bd
+    bd=Image.new('RGB',(w+8,h+8),(50,66,58)); bd.paste(im,(4,4)); return bd
 # scenes: (visual, title, [(caption, words)])
 S=[
 ('intro','Meet the builder',[
@@ -71,8 +71,8 @@ for vis,title,caps in S:
         d.text((W//2,550),"Live on Monad testnet",font=F(34),fill=MU,anchor='ma')
     # caption bar
     f=F(40); lines=wrap(d,c,f,W-260); bh=len(lines)*58+40
-    d.rectangle((0,H-bh-30,W,H),fill=(30,50,40))
-    for k,l in enumerate(lines): d.text((W//2,H-bh-30+30+k*58),l,font=f,fill=(255,255,255),anchor='ma')
+    d.rectangle((0,H-bh-30,W,H),fill=(24,36,30))
+    for k,l in enumerate(lines): d.text((W//2,H-bh-30+30+k*58),l,font=f,fill=(240,246,242),anchor='ma')
     fn=f'f{i:02d}.png'; im.save(fn); frames.append((fn,len(c.split())*per)); i+=1
 with open('list.txt','w') as fh:
     for fn,dur in frames: fh.write(f"file '{fn}'\nduration {dur:.2f}\n")
