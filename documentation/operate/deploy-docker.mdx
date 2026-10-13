@@ -1,0 +1,73 @@
+---
+title: "Self-host with Docker"
+description: "Run PayTrace on a persistent single host with local SQLite."
+icon: "container"
+---
+
+<Note>
+Docker is a supported **alternative** packaging. As of the October 2026 release it has **not** been container-tested end to end on a host. Run the full [release checklist](/operate/release-checklist) on your chosen host before relying on it.
+</Note>
+
+## The image
+
+```dockerfile Dockerfile
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+RUN npm prune --omit=dev
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 PAYTRACE_DB_PATH=/data/paytrace.sqlite
+COPY --from=build --chown=node:node /app /app
+RUN mkdir -p /data && chown node:node /data
+USER node
+EXPOSE 3000
+CMD ["node", "scripts/start-hosted.mjs"]
+```
+
+- Two stages; dev dependencies pruned.
+- Runs as the unprivileged `node` user (UID 1000).
+- `start-hosted.mjs` validates configuration, then runs `next start --hostname 0.0.0.0 --port $PORT`, forwarding `SIGTERM`/`SIGINT`.
+
+<Accordion title="In plain English" icon="lightbulb">
+Docker packages PayTrace into a box that runs the same everywhere. The box refuses to start until you've given it the required settings, and it keeps its data on a separate disk so updates don't erase it.
+</Accordion>
+
+## Steps
+
+<Steps>
+  <Step title="Provision">Create a service from this Dockerfile on a host you control. Don't make it public yet.</Step>
+  <Step title="Attach storage">Mount a **persistent disk at `/data`**, writable by UID 1000. Use **one replica** (SQLite is single-writer).</Step>
+  <Step title="Get the HTTPS hostname">Your reverse proxy must terminate TLS and **preserve the public `Host` header**.</Step>
+  <Step title="Generate credentials">
+    ```bash
+    node scripts/setup-hosting.mjs https://your-service.example.com
+    ```
+  </Step>
+  <Step title="Configure environment">Copy all four values from `.env.hosting` into the host's private environment settings.</Step>
+  <Step title="Deploy and verify">
+    - `/start` and `/login` work; wallet sign-in creates a workspace.
+    - `/owner` accepts the generated password.
+    - In a signed-out browser, a checkout link works while `/api/ledger` returns 401.
+  </Step>
+</Steps>
+
+## Local run
+
+```bash
+docker build -t paytrace .
+docker run --rm -p 3000:3000 -v paytrace-data:/data --env-file .env.hosting paytrace
+```
+
+(Hosted mode requires that requests arrive with the configured HTTPS host; for purely local testing use `npm run dev` instead.)
+
+## Operational notes
+
+- Sessions expire after 8 hours.
+- Non-Vercel hosts share a single sign-in budget per action (`single-host`); add edge throttling and monitoring.
+- Rotating the owner password requires a new session secret to revoke legacy owner sessions, which signs out all accounts.

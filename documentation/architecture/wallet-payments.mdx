@@ -1,0 +1,44 @@
+---
+title: "Wallet payments"
+description: "Internals of src/lib/wallet-payment.ts: calldata encoding and the guarded sendPayment sequence."
+icon: "send"
+---
+
+## Calldata: `transferData(recipient, amount)`
+
+ABI-encodes `transfer(address,uint256)` by hand, with no ABI library:
+
+```ts src/lib/wallet-payment.ts
+export function transferData(recipient: string, amount: string) {
+  if (!/^0x[0-9a-f]{40}$/i.test(recipient) || /^0x0{40}$/i.test(recipient)) throw new Error('Invalid receiving wallet.');
+  const raw = units(amount);
+  if (raw <= 0n) throw new Error('Invalid payment amount.');
+  return '0xa9059cbb'
+    + recipient.slice(2).toLowerCase().padStart(64, '0')
+    + raw.toString(16).padStart(64, '0');
+}
+```
+
+| Bytes | Content |
+| --- | --- |
+| 0–3 | Selector `a9059cbb` = first 4 bytes of `keccak256("transfer(address,uint256)")` |
+| 4–35 | `to`, left-padded to 32 bytes |
+| 36–67 | `value` in base units, big-endian, left-padded |
+
+<Accordion title="In plain English" icon="lightbulb">
+This builds the exact instruction your wallet sends to the USDC program: "transfer" + "to this address" + "this many millionths." PayTrace builds it from validated numbers, so a typo can't turn 10 into 100.
+</Accordion>
+
+## `sendPayment(provider, {payer, recipient, amount})`
+
+Guarded sequence; any failure throws **before** `eth_sendTransaction`:
+
+1. `eth_requestAccounts` → first account must equal `payer` (case-insensitive).
+2. `eth_chainId` → if not `0x279f`: `wallet_switchEthereumChain`; on error `4902`, `wallet_addEthereumChain` with `{chainName:'Monad Testnet', nativeCurrency:{MON,18}, rpcUrls, blockExplorerUrls}` then switch again. Other errors rethrow.
+3. Re-read `eth_chainId` → must be `0x279f`.
+4. Re-read `eth_accounts` → must still be `payer` (guards against account switches during the network prompt).
+5. Build `tx = {from, to: USDC, data, value: '0x0', chainId: '0x279f'}`.
+6. `eth_estimateGas` (surfaces insufficient balance before the signing prompt).
+7. `eth_sendTransaction` → result must be a 32-byte hex hash.
+
+No `approve`, no `permit`, no allowance. Tests: *wallet transfer encodes exact six-decimal USDC with no approval*, *wrong wallet or refused chain switch never broadcasts*, *invalid token amounts cannot become wallet calldata*.

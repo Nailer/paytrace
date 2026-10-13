@@ -1,0 +1,60 @@
+---
+title: "Get test tokens and set up your wallet"
+description: "Add Monad Testnet to your wallet and get free test USDC and MON."
+icon: "droplet"
+---
+
+<Info>
+Test tokens are free and have **no monetary value**. Never pay real money for them, and never share your seed phrase or private key with any faucet or website.
+</Info>
+
+## 1. Install a wallet
+
+Any EIP-1193 browser wallet that supports custom EVM networks works: MetaMask, Rabby, Coinbase Wallet extension, or a mobile wallet's built-in browser. Create a new account and **write down the recovery phrase offline**.
+
+<Accordion title="In plain English" icon="lightbulb">
+Install a crypto wallet extension in your browser. When it shows you 12 or 24 secret words, write them on paper and keep them safe. Anyone with those words controls your wallet.
+</Accordion>
+
+## 2. Add Monad Testnet
+
+PayTrace adds the network automatically the first time you pay a checkout. To add it manually:
+
+| Setting | Value |
+| --- | --- |
+| Network name | Monad Testnet |
+| RPC URL | `https://testnet-rpc.monad.xyz` |
+| Chain ID | `10143` |
+| Currency symbol | `MON` (18 decimals) |
+| Block explorer | `https://testnet.monadscan.com` |
+
+## 3. Get test MON (for gas)
+
+Use an official Monad testnet faucet listed in the [Monad developer docs](https://docs.monad.xyz/developer-essentials/testnet). You need only a small amount for a few transfers.
+
+## 4. Get test USDC
+
+<Steps>
+  <Step title="Open Circle's faucet">Go to [faucet.circle.com](https://faucet.circle.com).</Step>
+  <Step title="Choose token and network">Select **USDC** and **Monad Testnet**.</Step>
+  <Step title="Paste your address">Paste the address of the wallet that will **pay** (your payer account).</Step>
+  <Step title="Request tokens">Submit. Save the transaction hash if shown: you can later [import it as funding](/guides/import-funding) if it went to your receiving wallet.</Step>
+</Steps>
+
+## 5. Show USDC in your wallet (optional)
+
+Import the token so your wallet displays the balance:
+
+| Field | Value |
+| --- | --- |
+| Token contract | `0x534b2f3A21130d7a60830c2Df862319e593943A3` |
+| Symbol | USDC |
+| Decimals | 6 |
+
+<Warning>
+Only this contract counts in PayTrace. A token with the name "USDC" at any other address is rejected.
+</Warning>
+
+## Testing alone? Use two accounts
+
+Your receiving wallet and payer wallet **must be different** addresses. Create two accounts in the same wallet app: one as merchant (receives), one as payer (holds test USDC + MON).

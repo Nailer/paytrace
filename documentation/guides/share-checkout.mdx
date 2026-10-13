@@ -1,0 +1,39 @@
+---
+title: "Share the checkout link"
+description: "What the public checkout link exposes, how it's protected, and how to share it."
+icon: "share-2"
+---
+
+Each request has a checkout URL:
+
+```text
+https://paytrace-tau.vercel.app/track/<48 lowercase hex characters>
+```
+
+The token is 24 cryptographically random bytes (192 bits), so links are unguessable. Anyone **with** the link can view and pay it, so share it only with your payer.
+
+<Accordion title="In plain English" icon="lightbulb">
+The link contains a long random code that's practically impossible to guess. Think of it like an unlisted video link: private unless you share it.
+</Accordion>
+
+## What the payer sees vs. what stays private
+
+| Visible on checkout | Hidden |
+| --- | --- |
+| Description | Customer name/reference |
+| Amount | Internal notes |
+| Receiving wallet | Other requests |
+| Expected payer | Funding receipts |
+| Status, created date, request reference | Review items |
+| Proof and tx hash (once received) | Workspace name |
+
+## Protections on the checkout page
+
+- `robots: noindex, nofollow` (not indexed by search engines)
+- `Referrer-Policy: no-referrer` (the token isn't leaked to sites the payer navigates to)
+- `X-Frame-Options: DENY` and `frame-ancestors 'none'` (can't be embedded in another site)
+- `Cache-Control: no-store` on its API
+
+## Local vs hosted links
+
+Links from a **local** instance (`127.0.0.1:3100`) only work on your own computer. Only an HTTPS-hosted deployment produces links others can open.

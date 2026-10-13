@@ -1,0 +1,40 @@
+---
+title: "Request SIWE challenge"
+api: "POST https://paytrace-tau.vercel.app/api/wallet-session"
+description: "action: challenge. Issue a 5-minute, single-use EIP-4361 sign-in message bound to this browser."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+Step 1 of wallet login: "Please give me a message to sign." The server returns the message and sets a secret cookie so only this browser can finish the login.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>`"challenge"`</ParamField>
+<ParamField body="address" type="string" required>The wallet address that will sign.</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">48-hex nonce; pass to `verify`.</ResponseField>
+<ResponseField name="message" type="string">The exact EIP-4361 message to sign with `personal_sign`.</ResponseField>
+
+Sets `paytrace_signin=<64 hex>; Path=/; HttpOnly; SameSite=Strict; Max-Age=300` (+ `Secure` when hosted). Counts toward the 5-per-15-min sign-in budget.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/wallet-session \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -c cookies.txt \
+  -d '{"action":"challenge","address":"0x77aa…31cd"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "id": "4f1c…(48 hex)",
+  "message": "paytrace-tau.vercel.app wants you to sign in with your Ethereum account:\n0x77AA…31Cd\n\nSign in to your PayTrace workspace. This does not authorize a payment or token access.\n\nURI: https://paytrace-tau.vercel.app\nVersion: 1\nChain ID: 10143\nNonce: 4f1c…\nIssued At: …\nExpiration Time: …"
+}
+```
+</ResponseExample>

@@ -1,0 +1,40 @@
+---
+title: "Roadmap"
+description: "Candidate next steps, derived from the original sprint plan and known limitations. Not commitments."
+icon: "map"
+---
+
+<Note>
+These are possibilities, not promises. Nothing here is implemented unless it appears in the [Changelog](/resources/changelog).
+</Note>
+
+## Near term
+
+| Item | Why |
+| --- | --- |
+| Pending (202) response for merchant `match` | Avoid misleading 422s and spurious review items for unfinalized hashes |
+| Background reconciliation worker | Update requests even if the payer closes checkout; bounded `eth_getLogs` scanning with checkpoints |
+| Edge/distributed rate limits | Replace per-instance budgets for public exposure |
+| Code formatting and component extraction | Maintainability of dense components and handlers |
+| Docker host acceptance test | Certify the self-host path |
+| Monitoring and alerting | Production readiness |
+
+## Medium term
+
+| Item | Notes |
+| --- | --- |
+| Contract wallets (EIP-1271) and WalletConnect | Broader wallet support |
+| Optional payer ("anyone can pay") mode | Trade-off against third-party payment risk |
+| Account linking (password ↔ wallet) | Migrate legacy users |
+| Team workspaces and roles | Multi-user businesses |
+| Notifications | Email or webhooks on receipt |
+| Payout provider integration | Original Sprint-3 goal: sandbox credentials, signed webhooks, dedupe, out-of-order handling, returns; only after confirming provider support for Monad routes |
+
+## Long term
+
+- Mainnet support with audited deployment.
+- Additional chains/tokens via an allowlist registry.
+
+## Related project
+
+**LaunchProof**, planned in a separate repository after PayTrace acceptance: read-only checks of OpenZeppelin proxy/ownership configuration against user-specified expectations, with saved reports and drift comparison.

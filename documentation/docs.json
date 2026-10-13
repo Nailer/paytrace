@@ -1,0 +1,263 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "PayTrace",
+  "description": "PayTrace connects a Monad USDC payment request to its customer checkout and finalized onchain evidence. Noncustodial request, checkout, verification and receipt.",
+  "colors": {
+    "primary": "#237A62",
+    "light": "#3DB892",
+    "dark": "#19342E"
+  },
+  "background": {
+    "color": {
+      "light": "#FBF8F1",
+      "dark": "#0E1A17"
+    }
+  },
+  "fonts": {
+    "heading": { "family": "Manrope", "weight": 700 },
+    "body": { "family": "DM Sans" }
+  },
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png",
+    "href": "https://paytrace-tau.vercel.app"
+  },
+  "favicon": "/favicon.png",
+  "icons": { "library": "lucide" },
+  "appearance": { "default": "system" },
+  "banner": {
+    "content": "PayTrace runs on **Monad Testnet** only. Test USDC has no monetary value, and an onchain receipt is not bank settlement.",
+    "dismissible": true
+  },
+  "navbar": {
+    "links": [
+      { "label": "Verifier", "href": "https://paytrace-tau.vercel.app/verify" },
+      { "label": "GitHub", "href": "https://github.com/Nailer/paytrace" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Open PayTrace",
+      "href": "https://paytrace-tau.vercel.app"
+    }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude"]
+  },
+  "api": {
+    "playground": { "display": "simple" },
+    "examples": { "languages": ["bash", "javascript", "python"] }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "get-started/what-is-paytrace",
+              "get-started/blockchain-basics",
+              "get-started/quickstart-merchant",
+              "get-started/quickstart-payer",
+              "get-started/quickstart-developer"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/how-it-works",
+              "concepts/payment-requests",
+              "concepts/verification-rules",
+              "concepts/finality",
+              "concepts/evidence-and-claims",
+              "concepts/review-inbox",
+              "concepts/historical-funding",
+              "concepts/amounts-and-precision",
+              "concepts/workspaces-and-accounts"
+            ]
+          },
+          {
+            "group": "Merchant guides",
+            "pages": [
+              "guides/get-test-tokens",
+              "guides/prepare-request-as-guest",
+              "guides/sign-in-with-wallet",
+              "guides/set-receiving-wallet",
+              "guides/create-payment-request",
+              "guides/share-checkout",
+              "guides/manage-requests",
+              "guides/import-funding",
+              "guides/receipts-and-exports",
+              "guides/password-accounts"
+            ]
+          },
+          {
+            "group": "Payer guides",
+            "pages": [
+              "guides/pay-a-request",
+              "guides/verify-existing-transfer",
+              "guides/verify-any-transaction"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": ["troubleshooting", "resources/faq"]
+          }
+        ]
+      },
+      {
+        "tab": "Architecture",
+        "groups": [
+          {
+            "group": "System design",
+            "pages": [
+              "architecture/overview",
+              "architecture/tech-stack",
+              "architecture/project-structure",
+              "architecture/request-lifecycle"
+            ]
+          },
+          {
+            "group": "Subsystems",
+            "pages": [
+              "architecture/verification-engine",
+              "architecture/ledger-and-storage",
+              "architecture/authentication",
+              "architecture/workspace-isolation",
+              "architecture/wallet-payments",
+              "architecture/checkout-runtime",
+              "architecture/frontend",
+              "architecture/demo-prototype"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/rate-limits",
+              "api-reference/data-types"
+            ]
+          },
+          {
+            "group": "Ledger (merchant)",
+            "pages": [
+              "api-reference/ledger/get-snapshot",
+              "api-reference/ledger/settings",
+              "api-reference/ledger/create",
+              "api-reference/ledger/match",
+              "api-reference/ledger/import",
+              "api-reference/ledger/cancel",
+              "api-reference/ledger/note",
+              "api-reference/ledger/resolve"
+            ]
+          },
+          {
+            "group": "Checkout (public)",
+            "pages": [
+              "api-reference/track/get",
+              "api-reference/track/verify"
+            ]
+          },
+          {
+            "group": "Verifier (public)",
+            "pages": ["api-reference/verify/verify-transfer"]
+          },
+          {
+            "group": "Sessions",
+            "pages": [
+              "api-reference/wallet-session/challenge",
+              "api-reference/wallet-session/verify",
+              "api-reference/session/create",
+              "api-reference/session/delete"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Operate",
+        "groups": [
+          {
+            "group": "Build and run",
+            "pages": [
+              "operate/local-development",
+              "operate/configuration",
+              "operate/testing",
+              "operate/ci"
+            ]
+          },
+          {
+            "group": "Deploy",
+            "pages": [
+              "operate/deploy-vercel",
+              "operate/deploy-docker",
+              "operate/backups",
+              "operate/release-checklist",
+              "operate/demo-recording"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Security",
+        "groups": [
+          {
+            "group": "Security",
+            "pages": [
+              "security/overview",
+              "security/threat-model",
+              "security/privacy",
+              "security/limitations",
+              "security/reporting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Reference",
+            "pages": [
+              "resources/glossary",
+              "resources/changelog",
+              "resources/roadmap",
+              "resources/brand"
+            ]
+          },
+          {
+            "group": "Project",
+            "pages": [
+              "resources/contributing",
+              "resources/maintainer-tasks",
+              "resources/documentation-guide"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        { "anchor": "Live app", "icon": "globe", "href": "https://paytrace-tau.vercel.app" },
+        { "anchor": "Source code", "icon": "folder-git-2", "href": "https://github.com/Nailer/paytrace" },
+        { "anchor": "Monad docs", "icon": "book-open", "href": "https://docs.monad.xyz" }
+      ]
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Nailer/paytrace"
+    }
+  },
+  "seo": {
+    "metatags": { "og:site_name": "PayTrace Docs" }
+  }
+}

@@ -1,0 +1,48 @@
+---
+title: "Create payment request"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: create. Issue an immutable payment request anchored to the current Monad block."
+---
+
+The server reads `eth_chainId` (must be `0x279f`) and `eth_blockNumber` and stores the block as `afterBlock`.
+
+<Accordion title="In plain English" icon="lightbulb">
+Create a new "please pay me" request. PayTrace stamps it with the current blockchain page number so older payments can't be reused.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"create"`.</ParamField>
+<ParamField body="customer" type="string" required>Private reference, 1–80 chars after trimming.</ParamField>
+<ParamField body="description" type="string" required>Public description, 1–240 chars.</ParamField>
+<ParamField body="amount" type="string" required>Decimal string, `^\d{1,12}(\.\d{1,6})?$`, > 0. Must be a **string**, not a number.</ParamField>
+<ParamField body="payer" type="string" required>Expected payer address; must differ from recipient.</ParamField>
+<ParamField body="recipient" type="string">Optional. If omitted, the workspace's saved receiving wallet is used (error if none). If provided, used for this request only; settings are not changed.</ParamField>
+
+### Response
+
+`200` with the updated snapshot; the new request is first in `requests`.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"create","customer":"Acme Studio","description":"Website design, October","amount":"25","payer":"0x77aa…31cd"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 400
+{ "error": "The payer must be a different wallet from the receiving wallet." }
+```
+
+```json 502
+{ "error": "The provider is not connected to Monad testnet." }
+```
+
+```json 429
+{ "error": "The ledger is busy. Please retry shortly." }
+```
+</ResponseExample>

@@ -1,0 +1,24 @@
+---
+title: "Contributing"
+description: "How to propose changes to PayTrace safely."
+icon: "git-merge"
+---
+
+<Steps>
+  <Step title="Set up">Follow the [Developer quickstart](/get-started/quickstart-developer).</Step>
+  <Step title="Branch">Create a feature branch from `main`.</Step>
+  <Step title="Read the Next.js notes">Next.js 16.3.8 differs from older versions; consult `node_modules/next/dist/docs/` (see `AGENTS.md`).</Step>
+  <Step title="Write tests first for behavior">Add a test named as a guarantee ("X cannot Y"). Use RPC fixtures, never the live network.</Step>
+  <Step title="Run all checks">`npm test && npm run typecheck && npm run build`.</Step>
+  <Step title="Update docs">Edit the relevant pages in `documentation/` and run `mint broken-links`.</Step>
+  <Step title="Open a PR">CI must pass.</Step>
+</Steps>
+
+## Ground rules
+
+- **Never weaken a verification rule** without a test proving the new behavior is safe.
+- Any state change must happen inside `atomic()`.
+- Never trust client-supplied workspace IDs, proofs, amounts or recipients.
+- Keep simulated data out of real flows, and label it.
+- Never commit `.env*`, `.data/`, SQLite files, wallet secrets or hosting passwords.
+- Don't claim performance, adoption or mainnet readiness that the code doesn't prove.

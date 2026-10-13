@@ -1,0 +1,54 @@
+---
+title: "Verify checkout payment"
+api: "POST https://paytrace-tau.vercel.app/api/track/{token}"
+description: "Public: verify a transaction against the request behind a checkout token and record it if valid."
+---
+
+The server takes recipient and amount from the stored request; the caller supplies only the hash. If the request is no longer `awaiting`, the current record is returned unchanged (idempotent).
+
+<Accordion title="In plain English" icon="lightbulb">
+The payment page sends the transaction's tracking number here. PayTrace checks it and, if correct, marks the request paid. If it's not ready yet, it says "pending, check back."
+</Accordion>
+
+<ParamField path="token" type="string" required>48 lowercase hex characters.</ParamField>
+<ParamField body="transactionHash" type="string" required>`0x` + 64 hex.</ParamField>
+
+### Responses
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | `TrackingRecord` | Received (or request already closed) |
+| `202` | `{ "pending": true, "summary": "…" }` | Receipt unavailable or not finalized; poll again |
+| `404` | error | Unknown token |
+| `409` | error | Evidence already claimed |
+| `422` | error | Rule violated; review item created |
+| `429` | error | 3 concurrent / 45 per minute per instance |
+| `502` | error | RPC problem |
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/track/9b0f… \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -d '{"transactionHash":"0x…"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 202
+{ "pending": true, "summary": "The transaction is included but its block is not yet within the provider's finalized range. Check again shortly." }
+```
+
+```json 200
+{
+  "id": "PT-6c1e…",
+  "status": "received",
+  "transactionHash": "0x…",
+  "proof": { "outcome": "verified", "…": "…" }
+}
+```
+
+```json 422
+{ "error": "The transfer must come from this request's expected payer wallet." }
+```
+</ResponseExample>

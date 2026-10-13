@@ -1,0 +1,46 @@
+---
+title: "Continuous integration"
+description: "The GitHub Actions workflow that gates every push and pull request."
+icon: "git-pull-request"
+---
+
+```yaml .github/workflows/checks.yml
+name: Checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run typecheck
+```
+
+| Property | Value |
+| --- | --- |
+| Triggers | Every push and pull request, all branches |
+| Permissions | `contents: read` only (least privilege) |
+| Node | 24 with npm cache |
+| Gates | Tests → build → typecheck |
+
+<Accordion title="In plain English" icon="lightbulb">
+Every time code is pushed to GitHub, a robot installs everything fresh and runs all the tests and checks. If any fail, you'll see a red ✗ on the commit or pull request.
+</Accordion>
+
+## Branch workflow
+
+Feature work happens on branches (e.g. `codex/testnet-verification`, `codex/production-storage`, `codex/merchant-onboarding`, `codex/guest-first-access`, `codex/clear-landing-hero`) and merges into `main` through pull requests (#1–#5). The production release runs on Vercel.
+
+## Documentation changes
+
+The Mintlify site in `documentation/` does not affect the app build. Validate docs locally with the Mintlify CLI (see [Documentation guide](/resources/documentation-guide)).

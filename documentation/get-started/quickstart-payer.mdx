@@ -1,0 +1,60 @@
+---
+title: "Payer quickstart"
+description: "Someone sent you a PayTrace link. Here's exactly how to pay it safely."
+icon: "wallet"
+---
+
+You do **not** need a PayTrace account. You need:
+
+<CardGroup cols={3}>
+  <Card title="A wallet" icon="wallet">
+    A browser extension (MetaMask, Rabby…) or a wallet app's built-in browser.
+  </Card>
+  <Card title="Test USDC" icon="circle-dollar-sign">
+    At least the requested amount, on Monad Testnet.
+  </Card>
+  <Card title="A little test MON" icon="fuel">
+    To pay the network fee (gas).
+  </Card>
+</CardGroup>
+
+<Warning>
+You must pay from the **expected payer** address shown on the checkout. A payment from any other wallet will **not** count, even if the amount is correct.
+</Warning>
+
+<Steps>
+  <Step title="Open the link">
+    Open the `/track/...` link in a browser where your wallet is installed. On mobile, open it inside your wallet app's browser. Check the description, amount, **Receiving wallet** and **Expected payer**.
+  </Step>
+  <Step title="Click Pay with your wallet">
+    PayTrace calls `eth_requestAccounts`. If the selected account isn't the expected payer, it stops with a message and **nothing is sent**.
+
+    <Accordion title="In plain English" icon="lightbulb">
+    Your wallet asks which account to use. Pick the one that matches "Expected payer." If you pick the wrong one, PayTrace stops before anything happens.
+    </Accordion>
+  </Step>
+  <Step title="Approve the network switch (if asked)">
+    If your wallet isn't on Monad Testnet, PayTrace requests `wallet_switchEthereumChain` to `0x279f`, and if your wallet doesn't know the network (error `4902`), it requests `wallet_addEthereumChain` with the RPC and explorer pre-filled.
+  </Step>
+  <Step title="Approve the exact transfer">
+    Your wallet shows a call to the USDC contract `0x534b…43A3` transferring the exact amount to the receiving wallet. Value is `0` MON (only gas is spent). There is **no approval/allowance** step.
+
+    <Accordion title="In plain English" icon="lightbulb">
+    Your wallet shows "send X USDC to [merchant address]." Check it matches the page, then confirm. You only ever approve this one exact payment.
+    </Accordion>
+  </Step>
+  <Step title="Wait for confirmation">
+    The page shows **Confirming onchain…** and checks every 8 seconds for up to 4 minutes. Your transaction hash is saved in this browser, so closing the tab is safe: reopen the same link to resume.
+  </Step>
+  <Step title="Get your receipt">
+    When it says **All accounted for**, click **Download receipt** (JSON) or **Print receipt**, or follow **View the onchain receipt** to the block explorer.
+  </Step>
+</Steps>
+
+<Tip>
+**Already paid from your wallet directly?** Don't pay again. Use **Already sent it?** on the checkout and paste your transaction hash. See [Verify an existing transfer](/guides/verify-existing-transfer).
+</Tip>
+
+<Note>
+If the checkout says **This request is closed**, the merchant cancelled it. Do not send funds. Cancellation does not stop a transfer you send anyway, and PayTrace cannot refund it.
+</Note>

@@ -1,0 +1,53 @@
+---
+title: "Get workspace snapshot"
+api: "GET https://paytrace-tau.vercel.app/api/ledger"
+description: "Return the signed-in merchant's full workspace: receiving wallet, requests, funding and reviews."
+---
+
+Requires a valid merchant session (hosted) or a loopback host (local).
+
+<Accordion title="In plain English" icon="lightbulb">
+"Give me everything in my dashboard." The workspace page calls this every 15 seconds.
+</Accordion>
+
+### Response
+
+Returns a [`LedgerSnapshot`](/api-reference/data-types#ledgersnapshot).
+
+<RequestExample>
+```bash cURL
+curl https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Cookie: paytrace_session=…'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "workspaceName": "Workspace 0x1a2b…9f0e",
+  "recipient": "0x1a2b…9f0e",
+  "requests": [
+    {
+      "id": "PT-6c1e…",
+      "token": "9b0f…(48 hex)",
+      "customer": "Acme Studio",
+      "description": "Website design, October",
+      "amount": "1.000000",
+      "recipient": "0x1a2b…9f0e",
+      "payer": "0x77aa…31cd",
+      "createdAt": "2026-10-02T11:58:00.000Z",
+      "afterBlock": 41230000,
+      "status": "awaiting",
+      "proof": null,
+      "notes": []
+    }
+  ],
+  "funding": [],
+  "reviews": []
+}
+```
+
+```json 401
+{ "error": "Please sign in to your workspace." }
+```
+</ResponseExample>

@@ -1,0 +1,50 @@
+---
+title: "Manage requests"
+description: "Search, refresh, add notes, match hashes manually and cancel requests."
+icon: "list-checks"
+---
+
+## Workspace layout
+
+| Area | Content |
+| --- | --- |
+| Sidebar | **Payment requests** (count), **Funding receipts** (count), **Needs review** (unresolved count), **Verify a transaction**, **How PayTrace works** |
+| Summary tiles | Received for requests (sum), Awaiting payment (sum), Historical funding (count) |
+| Main list | Requests, newest first, with search |
+| Details panel | Opens when you click a request |
+
+## Search
+
+Filters requests client-side by customer and description text.
+
+## Auto-refresh
+
+The workspace re-fetches `GET /api/ledger` every **15 seconds** and when you click **Refresh ledger**.
+
+<Accordion title="In plain English" icon="lightbulb">
+You don't need to reload the page. Every 15 seconds your dashboard checks for updates, so a payment confirmed on your customer's screen appears on yours shortly after.
+</Accordion>
+
+## Internal notes
+
+Add context visible only to you (e.g. "invoice #44, net-15"). 1–1000 characters, append-only, timestamped. API: `{action: "note", id, text}`. Notes never appear on checkout.
+
+## Match a transaction manually
+
+If the payer sent funds outside the checkout and gave you the hash, paste it into **Payment transaction hash** in the request details. API: `{action: "match", id, transactionHash}`. The same [verification rules](/concepts/verification-rules) apply; failures go to **Needs review**.
+
+<Warning>
+**Wait until the transfer is finalized before matching manually.** Unlike checkout (which returns `202 pending`), the merchant match has no pending state. A hash with no receipt yet currently fails with *"This transfer predates the request…"*, and an included-but-unfinalized one fails with *"The transfer must come from this request's expected payer wallet."* Both add a review item. The request stays `awaiting` and you can simply match again once the block is final. This is a known issue; see [Known limitations](/security/limitations).
+</Warning>
+
+## Cancel a request
+
+Click **Cancel request** (only for `awaiting`). API: `{action: "cancel", id}`.
+
+<Warning>
+**Cancellation closes the checkout; it does not move money.** It can't reverse a transfer, and it can't stop someone sending USDC directly to your wallet. A received request cannot be cancelled (409).
+</Warning>
+
+## Concurrency limit
+
+The ledger API processes at most **3 concurrent write operations per server instance**. Extra requests get *"The ledger is busy. Please retry shortly."* (429).

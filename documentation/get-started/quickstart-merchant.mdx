@@ -1,0 +1,69 @@
+---
+title: "Merchant quickstart"
+description: "Go from zero to a verified, received payment request on the live PayTrace app in about five minutes."
+icon: "rocket"
+---
+
+This quickstart uses the hosted release at [paytrace-tau.vercel.app](https://paytrace-tau.vercel.app). You need an Ethereum-compatible browser wallet (MetaMask, Rabby, Coinbase Wallet extension, or a wallet's in-app browser).
+
+<Info>
+**What you need before you start**
+- A wallet you control, to **receive** (your merchant wallet).
+- A **different** wallet that will **pay** (your customer, or a second account of yours for testing) holding test USDC and a little test MON. See [Get test tokens](/guides/get-test-tokens).
+</Info>
+
+<Steps>
+  <Step title="Prepare a request without signing in" icon="file-pen">
+    Open [`/start`](https://paytrace-tau.vercel.app/start). Fill in:
+    - **Customer / reference**: e.g. `Acme Studio` (1–80 characters, private to you)
+    - **Description**: e.g. `Website design, October` (1–240 characters, shown to the payer)
+    - **Amount**: e.g. `1` or `12.500000` (positive, up to 6 decimals, up to 12 integer digits)
+    - **Receiving wallet**: your merchant address
+    - **Expected payer**: the customer's address (must differ from receiving wallet)
+
+    Click to review. The draft is validated client-side and stored in this tab's `sessionStorage` under `paytrace-request-draft-v1`.
+
+    <Accordion title="In plain English" icon="lightbulb">
+    You fill in a simple form: who's paying, what it's for, how much, where the money goes and which wallet it'll come from. Nothing is saved to PayTrace yet; the draft just lives in your browser tab.
+    </Accordion>
+  </Step>
+  <Step title="Sign in with your wallet" icon="key-round">
+    Click publish. Because you are not signed in, PayTrace redirects to `/login?next=start`. Click **Continue with wallet**, choose your account, and approve the **Sign-In with Ethereum** message. It costs nothing, moves no tokens and grants no permissions. The first sign-in creates your workspace; later sign-ins with the same wallet reopen it.
+
+    <Accordion title="In plain English" icon="lightbulb">
+    Instead of a username and password, you prove you own your wallet by "signing" a short message, like signing your name. It's free. Your wallet *is* your login, so keep access to it.
+    </Accordion>
+  </Step>
+  <Step title="Review and publish" icon="send">
+    You return to `/start` with the draft restored. Confirm the details and publish. The server reads the current Monad block number, stores it as the request's `afterBlock` checkpoint, assigns an ID `PT-<uuid>` and a 48-hex-character checkout token, and redirects you to `/workspace`.
+
+    <Accordion title="In plain English" icon="lightbulb">
+    PayTrace saves your request and notes the current blockchain "page number." Any payment from *before* this moment can never count for this request, which stops someone from reusing an old payment.
+    </Accordion>
+  </Step>
+  <Step title="Share the checkout link" icon="share-2">
+    In the workspace, open the request and click **Open customer checkout**. Copy the URL (`/track/<token>`) and send it to your payer by any channel. Anyone with the link can see the description, amount and both wallet addresses, but never your customer name or internal notes.
+  </Step>
+  <Step title="The payer pays" icon="wallet">
+    The payer opens the link in a wallet-enabled browser and clicks **Pay with your wallet**. Their wallet switches to Monad Testnet if needed and asks them to approve an exact USDC transfer. See [Payer quickstart](/get-started/quickstart-payer).
+  </Step>
+  <Step title="Watch it become Received" icon="circle-check">
+    The checkout polls verification every 8 seconds (up to 4 minutes). Once the transfer is finalized and matches every rule, the request becomes **Received** in both the checkout and your workspace (which refreshes every 15 seconds).
+  </Step>
+  <Step title="Keep the evidence" icon="download">
+    Open the request to **Download evidence** (JSON) or click **Export CSV** for the whole ledger. The payer can download or print their own receipt.
+  </Step>
+</Steps>
+
+## What if it doesn't go green?
+
+If the transfer was wrong (different amount, wrong sender, sent before the request, wrong token), the request stays **Awaiting** and an explanation appears in **Needs review**. Nothing is ever marked paid by mistake. See [Review inbox](/concepts/review-inbox) and [Troubleshooting](/troubleshooting).
+
+<CardGroup cols={2}>
+  <Card title="Payment request lifecycle" icon="git-branch" href="/concepts/payment-requests">
+    Every state and transition.
+  </Card>
+  <Card title="Verification rules" icon="shield-check" href="/concepts/verification-rules">
+    The checklist every payment must pass.
+  </Card>
+</CardGroup>

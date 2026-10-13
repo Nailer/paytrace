@@ -1,0 +1,45 @@
+---
+title: "Known limitations"
+description: "Everything PayTrace does not do yet, stated plainly."
+icon: "circle-alert"
+---
+
+## Product scope
+
+- **Monad Testnet only.** No mainnet, no other chains, no other tokens.
+- **No fiat**: no bank payouts, conversion or card payments. Onchain receipt ≠ bank settlement.
+- **No refunds** and no reversal on cancellation.
+- **No teams**: one account, one workspace; no roles or invitations.
+- **No email**: no notifications, no email recovery.
+- **Expected payer required** before creating a request.
+- **Single exact transfer** only: no partial, split or batched payments.
+
+## Verification
+
+- **No unattended indexer.** Verification runs while checkout is open (4-minute window) or when the merchant matches a hash. If the payer closes the tab and nobody submits the hash, the request stays awaiting until someone does.
+- **Merchant match has no pending state.** Submitting a not-yet-finalized hash through the workspace returns a misleading 422 (*"predates the request"* when no receipt exists; *"must come from this request's expected payer wallet"* when not finalized) and adds a review item. The request is unaffected and can be matched again once final.
+- **Provider trust.** PayTrace relies on the Monad public RPC for chain facts; it is not a consensus client.
+- **Smart-account payments** (EIP-4337 bundles, multi-call) are untested and likely flagged as ambiguous.
+
+## Accounts
+
+- EOA-only wallet sign-in. No EIP-1271 contract wallets, no WalletConnect.
+- Wallet sign-in doesn't link to password accounts.
+- Signing out doesn't revoke copies of a stateless session token.
+- Rotating the owner password requires rotating the session secret (global sign-out).
+
+## Operations
+
+- In-memory verification/ledger budgets are per process; not distributed.
+- Non-Vercel hosts share one sign-in budget per action.
+- SQLite deployments must be a single replica.
+- Docker image not yet executed on a real host.
+- No production monitoring or alerting is configured.
+
+## Code health
+
+- Several components and handlers are written as long, dense lines; formatting and component extraction would improve maintainability.
+
+<Note>
+Several of these appear as tasks in [Maintainer tasks](/resources/maintainer-tasks) and on the [Roadmap](/resources/roadmap).
+</Note>

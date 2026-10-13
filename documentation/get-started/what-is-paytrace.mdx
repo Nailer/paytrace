@@ -1,0 +1,87 @@
+---
+title: "What is PayTrace?"
+description: "Product definition, who it is for, design principles and what PayTrace deliberately does not do."
+icon: "info"
+---
+
+## Definition
+
+PayTrace is a **noncustodial payment-request and reconciliation layer** for ERC-20 USDC on Monad Testnet. It provides three cooperating surfaces:
+
+1. An **authenticated merchant workspace** that issues immutable payment requests and stores their lifecycle in a server-owned ledger.
+2. A **public, token-addressed checkout** (`/track/{token}`) through which an expected payer submits an ERC-20 `transfer` from an injected EIP-1193 wallet.
+3. A **server-side verification engine** that independently reads the transaction receipt from a Monad JSON-RPC provider and applies a deterministic rule set before atomically recording the transfer as evidence.
+
+<Accordion title="In plain English" icon="lightbulb">
+There are three parts:
+1. **Your dashboard**, where you create "please pay me" requests and see their status.
+2. **A payment page** you share with your customer. They open it and pay from their wallet.
+3. **A checker** on PayTrace's server that looks up the payment on the blockchain and confirms it's correct before marking it paid.
+</Accordion>
+
+## Who it is for
+
+<CardGroup cols={2}>
+  <Card title="Freelancers and small businesses" icon="briefcase">
+    Anyone invoicing clients in USDC who needs to know which payment belongs to which job.
+  </Card>
+  <Card title="Payers" icon="user">
+    Customers who want a clear amount, a clear recipient and a receipt, without creating an account.
+  </Card>
+  <Card title="Operators and accountants" icon="calculator">
+    People who need a CSV ledger and auditable JSON evidence instead of screenshots.
+  </Card>
+  <Card title="Developers and reviewers" icon="code">
+    Engineers evaluating a strict, fail-closed approach to onchain payment verification.
+  </Card>
+</CardGroup>
+
+## Design principles
+
+<AccordionGroup>
+  <Accordion title="1. The server is the only authority on payment state" icon="server">
+    The client can never submit a "proof" that is trusted, and can never set a request to `received`. The server re-derives every fact from the RPC provider. **Plain English:** your browser can't lie to PayTrace; PayTrace always checks the blockchain itself.
+  </Accordion>
+  <Accordion title="2. Fail closed" icon="lock">
+    Any inconsistency (wrong chain, missing finality data, mismatched block hash, malformed log, duplicate log index) aborts verification and leaves financial state unchanged. **Plain English:** if anything looks even slightly off, PayTrace says "not verified" rather than guessing "probably paid."
+  </Accordion>
+  <Accordion title="3. Exact integer arithmetic" icon="hash">
+    Amounts are parsed into `bigint` base units (10⁻⁶ USDC). No floating point is used for comparison. **Plain English:** 9.999999 is never treated as 10. The amount must match to the last digit.
+  </Accordion>
+  <Accordion title="4. One transfer, one claim" icon="fingerprint">
+    Each `Transfer` log has a globally unique evidence ID `chainId:txHash:logIndex`, inserted under a primary-key constraint within the same write transaction as the status change. **Plain English:** one payment can't be counted twice, not for two invoices, and not as both an invoice payment and a deposit.
+  </Accordion>
+  <Accordion title="5. Noncustodial by construction" icon="wallet">
+    PayTrace stores no private keys, deploys no contracts, and requests no ERC-20 allowance. The payer's wallet signs a direct `transfer(recipient, amount)` call. **Plain English:** PayTrace can't move or freeze your money, because it never has access to it.
+  </Accordion>
+  <Accordion title="6. Honest boundaries" icon="scale">
+    Simulated data is labelled. Testnet is labelled. "Received onchain" is never described as bank settlement. **Plain English:** PayTrace tells you exactly what it knows and what it doesn't.
+  </Accordion>
+</AccordionGroup>
+
+## What PayTrace is not
+
+| It is not… | Because… |
+| --- | --- |
+| A custodian or wallet | Funds go wallet-to-wallet; PayTrace never holds keys. |
+| A payment processor with refunds | There is no mechanism to move funds back. Cancellation only closes the checkout. |
+| A fiat on/off-ramp | No bank payouts, card payments or currency conversion. |
+| A mainnet product (yet) | Only Monad Testnet and Circle test USDC are allowlisted. |
+| A consensus client | It trusts the configured RPC provider for chain data. |
+| A general indexer | Verification runs on demand (checkout open or merchant action), not by scanning the chain continuously. |
+| A team/organization tool | One account owns one workspace. No roles or invitations. |
+
+## Key product surfaces
+
+| Route | Audience | Purpose |
+| --- | --- | --- |
+| `/` | Everyone | Landing page |
+| `/start` | Anyone (no sign-in) | Prepare and review a draft request |
+| `/login`, `/signup` | Merchants | Wallet sign-in (SIWE). Both routes render the same flow |
+| `/workspace` | Signed-in merchant | Requests, funding receipts, review inbox |
+| `/track/{token}` | Payer | Public checkout and receipt |
+| `/verify` | Anyone | Read-only transaction verifier |
+| `/guide` | Everyone | In-app user guide |
+| `/password-login`, `/recover` | Legacy password accounts | Sign-in and recovery-code reset |
+| `/owner` | Original operator | Original workspace via deployment password |
+| `/demo` | Reviewers | Archived, clearly simulated design prototype |

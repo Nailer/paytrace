@@ -1,0 +1,49 @@
+---
+title: "Backups and restore"
+description: "Take consistent online backups of the SQLite ledger and restore them safely."
+icon: "archive"
+---
+
+<Info>
+This applies to **SQLite** deployments (local, Docker). For Turso, use Turso's own backup and point-in-time restore features.
+</Info>
+
+## Create a backup
+
+```bash
+PAYTRACE_DB_PATH=/data/paytrace.sqlite node scripts/backup.mjs /data/paytrace-backup-2026-10-01.sqlite
+```
+
+```js scripts/backup.mjs (behavior)
+// opens the source read-only with node:sqlite DatabaseSync
+// uses SQLite's online backup API → consistent even while the app is running
+// refuses if the destination exists, or the source is missing
+// chmod 0600 on the result
+```
+
+<Accordion title="In plain English" icon="lightbulb">
+This makes a safe copy of your database while PayTrace keeps running, without freezing anything. It won't overwrite an older backup, and it makes the file readable only by you.
+</Accordion>
+
+Copy the result to **private storage off the service's disk**.
+
+<Warning>
+A backup contains customer references, internal notes and **checkout tokens** (which grant public access to each checkout). Treat it as confidential.
+</Warning>
+
+## Restore
+
+<Steps>
+  <Step title="Stop the service" />
+  <Step title="Preserve the current database">Keep `paytrace.sqlite`, `paytrace.sqlite-wal` and `paytrace.sqlite-shm` together. Don't overwrite a live database.</Step>
+  <Step title="Point to the backup">Set `PAYTRACE_DB_PATH` to the verified backup file.</Step>
+  <Step title="Restart and re-test">Check sign-in and a checkout's status.</Step>
+</Steps>
+
+## Recommended cadence
+
+| Activity | Frequency |
+| --- | --- |
+| Backup | Daily, and before every deploy |
+| Restore drill into a separate test process | Before release, then monthly |
+| Off-host copy | Every backup |

@@ -1,0 +1,43 @@
+---
+title: "Verify any transaction"
+description: "Use the public, read-only /verify tool to check a Monad USDC transfer without an account."
+icon: "scan-search"
+---
+
+[`/verify`](https://paytrace-tau.vercel.app/verify) is a standalone, **read-only** verifier. It runs the same Layer-1 chain checks as checkout ([verification rules](/concepts/verification-rules)) but is not attached to any request, so it never changes any record.
+
+<Accordion title="In plain English" icon="lightbulb">
+A free checker anyone can use: paste a transaction, a wallet and an amount, and PayTrace tells you whether that exact USDC payment really arrived and is final. It's like checking a parcel's tracking number. It changes nothing.
+</Accordion>
+
+## Inputs
+
+| Field | Format |
+| --- | --- |
+| Transaction hash | `0x` + 64 hex |
+| Expected recipient | `0x` + 40 hex, nonzero |
+| Expected amount | Positive, up to 6 decimals |
+
+## Result panel
+
+| Field | Meaning |
+| --- | --- |
+| Outcome / summary | `verified`, `amount_mismatch`, `no_transfer`, `not_finalized`, `reverted`, `unavailable` |
+| Observed for recipient | Amount of the single matching transfer, if any |
+| Provider payout | **Not checked** (PayTrace never verifies bank payouts) |
+| Transaction | Hash with explorer link |
+| USDC contract | The allowlisted contract |
+| Receipt block / Finalized through | Block number of the transfer and the provider's finalized head |
+| Observed transfer events | Each candidate event: evidence ID, from, to, amount, mint flag |
+
+Footer note: *"No invoice has been assigned and no demo record was modified."*
+
+## What it checks (shown on the page)
+
+1. **The right network**: the RPC must identify itself as Monad testnet.
+2. **A successful, finalized transaction**: receipt, canonical block and finalized block evidence must agree.
+3. **The actual USDC event**: Circle's contract, recipient and exact amount, not the token name.
+
+## Rate limits
+
+Per server instance: at most 3 concurrent verifications and 20 per 60-second window. Over the limit: 429 with `Retry-After: 30`. See [Rate limits](/api-reference/rate-limits).

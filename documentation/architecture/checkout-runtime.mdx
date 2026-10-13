@@ -1,0 +1,49 @@
+---
+title: "Checkout runtime"
+description: "Client-side state, polling, persistence and recovery behavior of the checkout component."
+icon: "timer"
+---
+
+`src/components/checkout.tsx` is a client component initialized with the server-rendered `TrackingRecord`.
+
+## State
+
+| State | Purpose |
+| --- | --- |
+| `row` | Current tracking record |
+| `hash` | Submitted or pasted transaction hash |
+| `busy` | A wallet or verify call is in flight |
+| `pending` | Waiting for finality; drives polling |
+| `error`, `message` | User-facing feedback (`role="alert"` / `role="status"`) |
+| `checking` (ref) | Mutex: prevents overlapping verify calls |
+| `attempt` (ref) | Poll counter |
+
+## Timers
+
+| Timer | Interval | Condition | Action |
+| --- | --- | --- | --- |
+| Verification poll | 8 s | `pending && hash && status==='awaiting'` | `POST /api/track/{token}`; stop after 30 attempts |
+| Status refresh | 15 s | `status==='awaiting'` | `GET /api/track/{token}`; picks up merchant-side matches or cancellations |
+
+<Accordion title="In plain English" icon="lightbulb">
+The payment page runs two little clocks: one asks "is my payment confirmed?" every 8 seconds (for up to 4 minutes), and another checks "has anything changed on this request?" every 15 seconds, so if the merchant cancels or matches it, the page updates.
+</Accordion>
+
+## Persistence and recovery
+
+- On a returned hash: `localStorage['paytrace-submission-<token>'] = hash`.
+- On mount, if a valid saved hash exists and the request is awaiting: restore it and resume polling.
+- On a final result: remove the key.
+- All storage access is wrapped in `try/catch` (private mode, blocked storage).
+
+## Double-payment protection
+
+The **Pay** button is disabled while `busy`, `pending`, or **whenever a hash is present**, with the hint *"Verify the existing transfer below before sending another payment."*
+
+## Server-side limits on checkout verification
+
+Per instance: max 3 concurrent and 45 per 60-second window → 429 *"Verification is busy. Retry shortly."*
+
+## Limitation
+
+Verification runs **only while a checkout is open** (or when the merchant matches manually). There is no unattended background worker. See [Known limitations](/security/limitations).

@@ -1,0 +1,26 @@
+---
+title: "Acknowledge review item"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: resolve. Mark a review item acknowledged without changing payment status."
+---
+
+Sets `resolved = 1` on one review in your workspace. Never changes request status or claims evidence. Unknown or foreign IDs are a silent no-op.
+
+<Accordion title="In plain English" icon="lightbulb">
+"I've seen this problem." It just clears it from your inbox. It does **not** mark anything paid.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"resolve"`.</ParamField>
+<ParamField body="id" type="string" required>Review item ID.</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"resolve","id":"3f2c…"}'
+```
+</RequestExample>

@@ -1,0 +1,44 @@
+---
+title: "Workspace isolation"
+description: "How multi-tenancy is implemented with scoped Ledger instances and the ownership table."
+icon: "boxes"
+---
+
+## Scoped ledger instances
+
+`Ledger.forWorkspace(id)` returns `Object.create(this)` with `workspace = id`: a lightweight prototype-chained view sharing the same DB client. All scoped queries consult `this.workspace`.
+
+```ts
+const scoped = Object.create(this) as Ledger;
+scoped.workspace = workspace; // 'legacy' or validated UUID
+```
+
+<Accordion title="In plain English" icon="lightbulb">
+For each request, PayTrace creates a "lens" on the database that can only see one workspace's records. Every read and write goes through that lens.
+</Accordion>
+
+## What is scoped
+
+| Operation | Scope mechanism |
+| --- | --- |
+| `snapshot()` | Requests/funding/reviews filtered by `ownership`; recipient via workspace settings key |
+| `request()`, `readRequest()` | `WHERE id=? AND <scope>` → 404 if not owned |
+| `match`, `cancel`, `note`, `review` | Use `readRequest` inside the transaction |
+| `resolveReview(id)` | `UPDATE … WHERE id=? AND <scope on request_id>` |
+| `setRecipient` | `workspace:<id>:recipient` |
+| `claim` | Evidence key prefixed with workspace ID (non-legacy) |
+| `create`, `importFunding` | Insert `ownership` row in the same transaction |
+
+## Public checkout resolution
+
+`forTracking(token)` validates the token format, then joins `requests` to `ownership` to find the owning workspace (or `legacy` if no row), and returns a ledger scoped to that workspace. The payer never supplies a workspace ID.
+
+## Where the workspace comes from
+
+Only from the verified session cookie's `sub` claim, after the account and its version are re-checked against the database. Never from a URL, body field or header.
+
+## Tests
+
+- *workspaces isolate reads and all request mutations while checkout resolves its owner*
+- *historical funding and claims are isolated per workspace*
+- *account signup, sessions, recovery rotation and API tenant isolation*

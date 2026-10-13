@@ -1,0 +1,19 @@
+---
+title: "Reporting a vulnerability"
+description: "How to responsibly disclose security issues."
+icon: "bug"
+---
+
+If you find a security issue, please **do not** open a public issue with exploit details.
+
+<Steps>
+  <Step title="Report privately">Use GitHub's **Report a vulnerability** (Security → Advisories) on [Nailer/paytrace](https://github.com/Nailer/paytrace/security), if enabled. Otherwise open a minimal public issue asking the maintainer for a private contact, without details.</Step>
+  <Step title="Include">Affected route or file, reproduction steps, impact, and your suggested fix if any.</Step>
+  <Step title="Never include">Private keys, seed phrases, real passwords, recovery codes or session cookies.</Step>
+</Steps>
+
+## Scope
+
+In scope: anything that could mark an unpaid request as received, double-count evidence, leak private workspace data, bypass authentication or tenant isolation, or forge sessions.
+
+Testnet tokens have no value; please don't attack the public RPC or other users' wallets.

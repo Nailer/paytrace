@@ -1,0 +1,62 @@
+---
+title: "Tech stack"
+description: "Every runtime dependency, dev dependency and external service, and why it's used."
+icon: "layers"
+---
+
+## Runtime dependencies
+
+| Package | Version | Role |
+| --- | --- | --- |
+| `next` | 16.3.8 | App Router framework, Route Handlers, SSR. Security headers in `next.config.ts` |
+| `react` / `react-dom` | 19.2.8 | UI |
+| `@libsql/client` | ^0.18.0 | SQLite/Turso client used by `Ledger` |
+| `siwe` | ^3.0.0 | EIP-4361 message construction and signature verification |
+| `ethers` | ^6.17.0 | `getAddress` (EIP-55 checksum) for SIWE; also used by `siwe` for signature recovery |
+| `lucide-react` | ^0.468.0 | Icons |
+| `@fontsource/dm-sans` | ^5.2.0 | Body font (self-hosted) |
+| `@fontsource/manrope` | ^5.2.0 | Heading font (self-hosted) |
+
+<Accordion title="In plain English" icon="lightbulb">
+These are the building blocks: **Next.js/React** for the website, **libSQL** for the database, **SIWE** for "sign in with your wallet," **ethers** for wallet address handling, and **lucide** plus two fonts for the look.
+</Accordion>
+
+## Dev dependencies
+
+| Package | Role |
+| --- | --- |
+| `typescript` ^5 | Strict typechecking (`strict: true`, `noEmit`) |
+| `tsx` ^4.20 | Loads TypeScript in `node --test` (`node --import tsx`) |
+| `@types/node` ^24, `@types/react` ^19, `@types/react-dom` ^19 | Type definitions |
+
+## Node built-ins used
+
+| Module | Use |
+| --- | --- |
+| `node:crypto` | `randomBytes`, `randomUUID`, `scryptSync`, `createHmac`, `createHash`, `timingSafeEqual` |
+| `node:sqlite` | `DatabaseSync` + `backup()` in `scripts/backup.mjs`; tests |
+| `node:test` | Test runner |
+| `node:fs`, `node:path`, `node:url`, `node:child_process` | Paths, DB directory creation, hosted start wrapper |
+
+## External services
+
+| Service | Endpoint | Purpose |
+| --- | --- | --- |
+| Monad Testnet RPC | `https://testnet-rpc.monad.xyz` | `eth_chainId`, `eth_blockNumber`, `eth_getTransactionReceipt`, `eth_getBlockByNumber` |
+| Monadscan (testnet) | `https://testnet.monadscan.com` | Explorer links only |
+| Circle test USDC | `0x534b2f3A21130d7a60830c2Df862319e593943A3` | The only accepted token |
+| Turso | `libsql://…` | Hosted database |
+| Vercel | — | Hosting |
+| GitHub Actions | — | CI |
+
+## Standards implemented
+
+| Standard | Where |
+| --- | --- |
+| ERC-20 `transfer` / `Transfer` event | Checkout calldata; verifier log decoding |
+| EIP-1193 provider API | Checkout and wallet login |
+| EIP-3085 `wallet_addEthereumChain` | Checkout network setup |
+| EIP-3326 `wallet_switchEthereumChain` | Checkout network switch |
+| EIP-4361 Sign-In with Ethereum | Wallet sign-in |
+| EIP-55 checksum addresses | SIWE message address |
+| JSON-RPC 2.0 | RPC client |

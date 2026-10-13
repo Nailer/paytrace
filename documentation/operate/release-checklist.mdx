@@ -1,0 +1,42 @@
+---
+title: "Release checklist"
+description: "Acceptance checks to run on every hosted deployment, and the October 2026 release status."
+icon: "list-checks"
+---
+
+## Hosted acceptance checks
+
+<Steps>
+  <Step title="Protected ledger">`GET /api/ledger` without a session → **401**.</Step>
+  <Step title="Cross-origin writes">`POST` with a foreign `Origin` → **403**.</Step>
+  <Step title="Sign-in">Wallet sign-in creates a workspace; signing in again reopens it. `/owner` works with the generated password.</Step>
+  <Step title="Receiving wallet">Save it; reload; it persists.</Step>
+  <Step title="Checkout privacy">In a signed-out browser, the checkout link works and shows no customer name or notes.</Step>
+  <Step title="Historical rejection">An old transfer submitted against a new request → **422** and appears in Needs review.</Step>
+  <Step title="Fresh payment">A fresh testnet transfer completes wallet → checkout → merchant workspace.</Step>
+  <Step title="Cancellation">Cancel an awaiting request; checkout shows closed.</Step>
+  <Step title="Persistence">State survives a restart/redeploy (same DB fingerprint in logs).</Step>
+  <Step title="Backups">(SQLite) A backup restores into a separate test process.</Step>
+  <Step title="Visual">Desktop dashboard and 390 px mobile checkout inspected.</Step>
+</Steps>
+
+## Status of the October 2, 2026 testnet release
+
+| Check | Status |
+| --- | --- |
+| Vercel production with Turso and private operator login | ✅ |
+| Automated tests and production build; CI passed | ✅ |
+| Hosted login 200, unauthenticated ledger 401, cross-origin write 403 | ✅ |
+| Receiving wallet saved and loaded from hosted DB | ✅ |
+| Earlier real 1 test USDC transfer verified and saved as historical funding | ✅ |
+| Request creation and public checkout; private fields hidden | ✅ |
+| Earlier transfer rejected for a new request (422); acceptance request cancelled | ✅ |
+| Desktop and 390 px mobile inspected | ✅ |
+| Data survived full redeploy on dedicated production DB | ✅ |
+| Fresh 1 test USDC transfer matched to its prepared request and rechecked against live RPC | ✅ (local request) |
+| Fresh **hosted** wallet payment recorded on video | ⏳ Owner action |
+| Docker image executed on a real host | ⏳ Not yet tested |
+
+<Warning>
+Never represent mocked test RPC fixtures as live payment evidence.
+</Warning>

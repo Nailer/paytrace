@@ -1,0 +1,99 @@
+---
+title: "Blockchain basics for beginners"
+description: "Every concept you need to understand PayTrace, explained from zero. No prior crypto knowledge required."
+icon: "graduation-cap"
+---
+
+<Tip>
+If you have never used a crypto wallet, start here. Every section has a technical definition followed by a plain-English explanation. Experienced readers can skip to [How PayTrace works](/concepts/how-it-works).
+</Tip>
+
+## Blockchain
+
+A **blockchain** is an append-only, replicated ledger in which transactions are batched into blocks; each block commits to its predecessor via a cryptographic hash, and network validators reach consensus on a single canonical chain.
+
+<Accordion title="In plain English" icon="lightbulb">
+Think of a giant public notebook copied onto thousands of computers. Every few moments, a new page (a **block**) of transactions is added. Each page references the previous one, so nobody can secretly rewrite history. Everyone can read it; nobody can erase it.
+</Accordion>
+
+## Monad and Monad Testnet
+
+**Monad** is a high-throughput, EVM-compatible Layer-1 blockchain. **Monad Testnet** is its public test network, identified by **chain ID `10143`** (hex `0x279f`), with native gas token **MON**. PayTrace uses the public RPC `https://testnet-rpc.monad.xyz` and the explorer `https://testnet.monadscan.com`.
+
+<Accordion title="In plain English" icon="lightbulb">
+Monad is one particular blockchain. It works like Ethereum, so Ethereum wallets like MetaMask can use it. The **testnet** is a practice version where coins are free and worth nothing, perfect for trying things without risking real money. The **chain ID** (10143) is just its unique number so your wallet knows which network it's on.
+</Accordion>
+
+## Wallet and address
+
+A **wallet** manages a private key and derives a 20-byte **address** (`0x` + 40 hex characters) from its public key. An **externally owned account (EOA)** is an address controlled directly by such a key, as opposed to a smart-contract account. Browser wallets expose an **EIP-1193** provider (`window.ethereum`) for websites to request accounts, signatures and transactions.
+
+<Accordion title="In plain English" icon="lightbulb">
+A wallet is an app (like MetaMask, Rabby or Coinbase Wallet) that holds your secret key. Your **address** is like your account number: `0x` followed by 40 letters and numbers. You can share it freely. Your secret key (or "seed phrase") you never share, with anyone, ever, including PayTrace. When a website wants you to pay or sign something, your wallet pops up and asks for your approval.
+</Accordion>
+
+## USDC and ERC-20 tokens
+
+**USDC** is a dollar-referenced stablecoin issued by Circle. On EVM chains it is an **ERC-20** token contract. Balances live in the contract's storage; a transfer is a call to `transfer(address to, uint256 amount)` (function selector `0xa9059cbb`), which emits a `Transfer(address indexed from, address indexed to, uint256 value)` event. USDC uses **6 decimals**, so `1 USDC = 1,000,000` base units. PayTrace only accepts Circle's test USDC at `0x534b2f3A21130d7a60830c2Df862319e593943A3`.
+
+<Accordion title="In plain English" icon="lightbulb">
+USDC is a digital dollar. On the blockchain, it's managed by a program (a "token contract") that keeps track of who owns how much. Sending USDC means asking that program to move some from you to someone else, and the program writes a public note saying "A sent B this much." PayTrace reads that note.
+
+**Important:** anyone can create a fake coin and name it "USDC." That's why PayTrace checks the exact contract address, not the name.
+</Accordion>
+
+## Gas and MON
+
+Every transaction consumes **gas**, paid in the chain's native asset. On Monad Testnet that is **MON**. A USDC transfer therefore requires the payer to hold both test USDC (the value) and a small amount of test MON (the fee).
+
+<Accordion title="In plain English" icon="lightbulb">
+Sending anything on a blockchain costs a tiny fee, like a stamp on an envelope. On Monad Testnet the fee is paid in **MON**. So to pay 10 test USDC, you need the 10 USDC *plus* a little MON for the fee. Both are free on the testnet from faucets. See [Get test tokens](/guides/get-test-tokens).
+</Accordion>
+
+## Transaction hash, receipt and logs
+
+A **transaction hash** is the 32-byte Keccak-256 identifier (`0x` + 64 hex). After inclusion, a **transaction receipt** reports `status` (`0x1` success, `0x0` reverted), `blockNumber`, `blockHash` and an array of **logs** (events). Each log has an `address` (emitting contract), `topics` (event signature and indexed params), `data` and a block-unique `logIndex`.
+
+<Accordion title="In plain English" icon="lightbulb">
+- The **transaction hash** is the tracking number of a payment. Your wallet shows it after you send.
+- The **receipt** is the official result: did it succeed or fail, and which page (block) is it on?
+- The **logs** are the notes written during the transaction, like "USDC: Ada sent you 25." PayTrace reads these.
+</Accordion>
+
+## Finality
+
+A block is **final** when the consensus protocol guarantees it cannot be reverted. JSON-RPC exposes the latest final block via the `finalized` block tag. A block is **canonical** if the block at its height on the provider's current chain has the same hash.
+
+<Accordion title="In plain English" icon="lightbulb">
+Right after a payment, it's "written in pencil." A moment later it becomes "written in ink," permanent. PayTrace waits for the ink. It also double-checks that the page the payment is on is the real, official page, not a draft that got thrown away. More in [Finality](/concepts/finality).
+</Accordion>
+
+## Faucet
+
+A **faucet** is a service that dispenses free testnet tokens. Circle's faucet ([faucet.circle.com](https://faucet.circle.com)) provides test USDC on Monad Testnet.
+
+<Accordion title="In plain English" icon="lightbulb">
+A faucet is a free tap for play money. You paste your address and it sends you test coins so you can try PayTrace.
+</Accordion>
+
+## Signing a message vs sending a transaction
+
+**Signing** (`personal_sign`) produces an ECDSA signature over an arbitrary message, proving control of an address without changing chain state or costing gas. **Sending a transaction** (`eth_sendTransaction`) broadcasts a state change that consumes gas and may move value.
+
+<Accordion title="In plain English" icon="lightbulb">
+- **Signing a message** = showing your ID. Free, moves no money. PayTrace uses this to log you in.
+- **Sending a transaction** = actually paying. Costs a small fee, moves money. PayTrace only asks for this on the checkout page, and your wallet always shows you exactly what you're approving.
+
+**Golden rule:** read every wallet popup. If a site asks you to "approve" unlimited spending of your tokens, that's a different (riskier) thing. PayTrace never asks for that.
+</Accordion>
+
+## You're ready
+
+<CardGroup cols={2}>
+  <Card title="Get test tokens" icon="droplet" href="/guides/get-test-tokens">
+    Fill your wallet with free test USDC and MON.
+  </Card>
+  <Card title="Merchant quickstart" icon="rocket" href="/get-started/quickstart-merchant">
+    Create your first request.
+  </Card>
+</CardGroup>

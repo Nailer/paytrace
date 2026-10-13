@@ -1,0 +1,122 @@
+---
+title: "Errors"
+description: "Error format, HTTP status codes and the complete message catalogue."
+icon: "triangle-alert"
+---
+
+## Format
+
+```json
+{ "error": "This transfer is already recorded. It cannot be counted twice." }
+```
+
+Messages are written for end users and are safe to display. Unexpected internal errors never leak details; they return a generic message with status 500.
+
+## Status codes
+
+| Status | Meaning in PayTrace |
+| --- | --- |
+| `200` | Success |
+| `202` | Checkout verification pending (`{pending:true, summary}`): not yet available or not finalized |
+| `400` | Invalid input (`LedgerError` default) or unknown action |
+| `401` | Not signed in, session invalid, wrong password, bad signature, expired challenge |
+| `403` | Origin, host or cross-site check failed; local-only workspace accessed remotely |
+| `404` | Request, payment link or tracking token not found (or not in your workspace) |
+| `409` | Conflict: not awaiting, already recorded, username taken, receiving wallet changed |
+| `413` | Body too large |
+| `415` | Not `application/json` |
+| `422` | Evidence doesn't satisfy the request (creates a review item when matching) |
+| `429` | Rate limited: ledger busy, verification busy, sign-in attempts, public RPC limited |
+| `500` | Unexpected error (generic message) |
+| `502` | RPC unavailable, wrong chain, inconsistent chain data (`VerificationError` default) |
+| `503` | Server misconfiguration: missing origin, secret, password hash or hosted database |
+
+<Accordion title="In plain English" icon="lightbulb">
+- **2xx** = it worked (202 = "still waiting").
+- **4xx** = something about the request was wrong (bad input, not logged in, wrong payment).
+- **5xx** = PayTrace or the blockchain service had a problem; try again later.
+</Accordion>
+
+## Message catalogue
+
+### Ledger and requests
+
+| Status | Message |
+| --- | --- |
+| 400 | Enter a valid, nonzero wallet address. |
+| 400 | Customer name must contain 1–80 characters. / Description must contain 1–240 characters. / Note must contain 1–1000 characters. / Receipt label must contain 1–120 characters. |
+| 400 | Enter a positive amount with up to six decimal places. |
+| 400 | Save your receiving wallet first. |
+| 400 | The payer must be a different wallet from the receiving wallet. |
+| 400 | Choose a payment request. / Choose a request. / Choose a review item. |
+| 400 | Unknown ledger action. |
+| 415 | Expected JSON. |
+| 400 | Missing request details. / Invalid request details. |
+| 404 | Payment request not found. / Payment link not found. |
+| 409 | This request is no longer awaiting payment. |
+| 409 | Only an awaiting request can be cancelled. |
+| 409 | This transfer is already recorded. It cannot be counted twice. |
+| 409 | The receiving wallet changed. Verify the transfer again. |
+| 413 | Request is too large. |
+| 422 | The evidence does not match this request. |
+| 422 | This transfer predates the request. Import it as historical funding instead. |
+| 422 | The transfer must come from this request's expected payer wallet. |
+| 422 | Inconsistent transfer evidence. Nothing was recorded. |
+| 422 | *(proof summary, e.g. amount differs / reverted / no transfer / multiple events)* |
+| 429 | The ledger is busy. Please retry shortly. |
+| 429 | Verification is busy. Retry shortly. |
+| 502 | The provider is not connected to Monad testnet. / Starting block is unavailable. / Could not establish the request's starting block. |
+
+### Verification
+
+| Status | Message |
+| --- | --- |
+| 400 | A transaction hash must start with 0x and contain 64 hexadecimal characters. |
+| 400 | Enter a valid, nonzero recipient wallet address. |
+| 400 | Enter a positive USDC amount with up to six decimal places. |
+| 400 | Verification details must be valid JSON. |
+| 403 | Use the verification form from this site. |
+| 413 | Verification request is too large. |
+| 415 | Expected a JSON request. |
+| 429 | Verification is busy. Please retry in a moment. (`Retry-After: 30`) |
+| 429 | The public RPC is rate limited. Please retry in a moment. |
+| 502 | The connected provider is not Monad testnet. Verification stopped. |
+| 502 | The Monad testnet provider did not respond. Nothing was marked verified. Please retry. |
+| 502 | The Monad testnet provider is temporarily unavailable. |
+| 502 | The network returned unreadable data. / invalid block evidence / invalid block number / inconsistent transaction evidence / invalid event list |
+| 502 | The receipt no longer matches the canonical block. Check again. |
+| 502 | The transaction success status could not be verified. |
+| 502 | The provider could not supply finalized-block evidence. No payment was marked verified. |
+| 502 | A USDC transfer log has an unexpected format. / does not match the finalized receipt. / duplicate log indexes. |
+| 502 | The provider could not complete this verification. Nothing was marked verified. |
+
+### Accounts and sessions
+
+| Status | Message |
+| --- | --- |
+| 400 | Choose a username of 3–30 letters, numbers, underscores or hyphens. |
+| 400 | Use a password between 12 and 128 characters. |
+| 400 | Enter a workspace name of 1–60 characters. |
+| 400 | Unknown account action. / Unknown sign-in action. |
+| 401 | Username or password is incorrect. |
+| 401 | The workspace password is incorrect. |
+| 401 | Recovery details are incorrect or already used. |
+| 401 | Invalid sign-in. Please try again. |
+| 401 | This sign-in expired or was already used. Please try again. |
+| 401 | Invalid sign-in origin or network. |
+| 401 | The wallet signature could not be verified. |
+| 401 | Please sign in to your workspace. / Please sign in again. / Invalid workspace. |
+| 409 | That username is already taken. Choose another. |
+| 429 | Too many sign-in attempts. Try again in 15 minutes. |
+| 503 | Account sign-in is not configured on this host. / Sign-in is not configured on this host. |
+
+### Configuration
+
+| Status | Message |
+| --- | --- |
+| 403 | This workspace is local-only. Hosted access requires authentication before deployment. |
+| 503 | Public origin is not configured. |
+| 503 | Hosting configuration requires an HTTPS origin without a trailing slash. |
+| 503 | Workspace authentication is not configured. |
+| 503 | Hosted database is not configured. |
+| 503 | Hosted database requires a secure remote URL. |

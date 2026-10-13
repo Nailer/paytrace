@@ -1,0 +1,40 @@
+---
+title: "Documentation guide"
+description: "How this Mintlify site is organized, how to preview it locally, and the writing conventions."
+icon: "notebook-pen"
+---
+
+## Location
+
+```text
+documentation/
+├── docs.json            Site config: theme, colors, navigation, navbar
+├── favicon.png
+├── logo/light.png, logo/dark.png
+├── index.mdx
+├── get-started/  concepts/  guides/  architecture/
+├── api-reference/  operate/  security/  resources/
+└── troubleshooting.mdx
+```
+
+## Preview locally
+
+```bash
+npm i -g mint
+cd documentation
+mint dev           # http://localhost:3000
+mint broken-links  # check internal links
+```
+
+## Writing conventions
+
+1. **Technical first, then plain English.** After each technical explanation, add:
+   ```mdx
+   <Accordion title="In plain English" icon="lightbulb">
+   Simple explanation for non-technical readers.
+   </Accordion>
+   ```
+2. **Quote real behavior.** Error messages, limits and field rules must match the code exactly.
+3. **No overclaiming.** Say *testnet*, *test USDC*, *not audited*, *not bank settlement*.
+4. **Use components purposefully:** `<Steps>` for procedures, `<Warning>` for irreversible or risky actions, `<Check>` for checklists, Mermaid for flows.
+5. **Every new page** must be added to `navigation` in `docs.json`.

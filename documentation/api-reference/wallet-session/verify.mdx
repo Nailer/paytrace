@@ -1,0 +1,49 @@
+---
+title: "Verify SIWE signature"
+api: "POST https://paytrace-tau.vercel.app/api/wallet-session"
+description: "action: verify. Verify the signed challenge, consume it, and start an 8-hour session."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+Step 2 of wallet login: "Here's my signature." If valid, PayTrace logs you in, creating your workspace the first time.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>`"verify"`</ParamField>
+<ParamField body="id" type="string" required>Nonce from the challenge (48 hex).</ParamField>
+<ParamField body="signature" type="string" required>65-byte signature, `0x` + 130 hex.</ParamField>
+
+Requires the `paytrace_signin` cookie from the challenge.
+
+### Checks
+
+1. Input shapes and binding cookie (64 hex).
+2. Challenge exists for `(id, sha256(binding))` and hasn't expired.
+3. Message `uri` equals the origin and `chainId` is 10143.
+4. `SiweMessage.verify` with expected domain and nonce.
+5. Atomically delete the challenge (exactly one row), then find or create the wallet's account.
+
+### Response
+
+`200 {"ok": true}` with `Set-Cookie: paytrace_session=…; Max-Age=28800` and clears `paytrace_signin`.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/wallet-session \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -b cookies.txt -c cookies.txt \
+  -d '{"action":"verify","id":"4f1c…","signature":"0x…130 hex…"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{ "ok": true }
+```
+
+```json 401
+{ "error": "This sign-in expired or was already used. Please try again." }
+```
+</ResponseExample>

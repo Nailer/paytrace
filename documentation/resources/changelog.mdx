@@ -1,0 +1,56 @@
+---
+title: "Changelog"
+description: "How PayTrace evolved, milestone by milestone."
+icon: "history"
+---
+
+<Update label="October 2026" description="Documentation">
+  - Added this Mintlify documentation site under `documentation/`.
+</Update>
+
+<Update label="Landing hero (#5)" description="October 2026">
+  - Clearer landing page explaining payment links, verification and receipts.
+</Update>
+
+<Update label="Guest-first and wallet access (#4)" description="October 2026">
+  - `/start` prepares a real request without an account; draft survives sign-in in `sessionStorage`.
+  - `/login` and `/signup` use one SIWE flow: 5-minute, browser- and origin-bound, single-use challenges.
+  - Existing password accounts move to `/password-login`; `/owner` preserved.
+  - 46 automated tests.
+</Update>
+
+<Update label="Merchant onboarding (#3)" description="October 2026">
+  - Independent merchant accounts with isolated workspaces.
+  - Signup, username/password sign-in, recovery codes, session versioning, workspace naming and wallet setup.
+  - Additive `ownership` and `accounts` tables preserve existing records.
+</Update>
+
+<Update label="Production storage (#2)" description="2 October 2026">
+  - Asynchronous libSQL adapter supporting Turso; Vercel deployment at `paytrace-tau.vercel.app`.
+  - Write transactions for claims, notes, cancellation and reviews.
+  - Persistent, client-isolated login budgets.
+  - Dedicated production database after detecting changing identities.
+  - Hosted acceptance: 401 ledger, 403 cross-origin, checkout privacy, historical rejection, cancellation.
+  - Repository made public.
+</Update>
+
+<Update label="Testnet verification (#1)" description="1–2 October 2026">
+  - Wallet-assisted checkout with chain switching and gas estimation; manual hash fallback.
+  - Printable receipts and JSON evidence; review inbox; CSV export.
+  - Fresh 1 test USDC payment matched and independently rechecked against live RPC.
+</Update>
+
+<Update label="Sprint 3 — Functional ledger" description="1 October 2026">
+  - Server-owned SQLite ledger, no seeded demo records; prototype moved to `/demo`.
+  - Immutable requests with expected payer and block checkpoint; atomic evidence uniqueness; historical funding; notes; opaque tracking routes.
+  - Real 20 test USDC transfer verified and saved as funding. 27 tests.
+</Update>
+
+<Update label="Sprint 2 — Real chain evidence" description="October 2026">
+  - Read-only `/verify` page and `/api/verify`.
+  - Network, receipt, canonical, finality, contract, recipient and amount checks; mint detection; multi-candidate review. 19 tests.
+</Update>
+
+<Update label="Sprint 1 — Interface prototype" description="October 2026">
+  - Responsive simulated workspace: overview, list, filters, exception inbox, timeline, customer preview, CSV, exact integer reconciliation, simulated payouts. 9 tests.
+</Update>

@@ -1,0 +1,52 @@
+---
+title: "Maintainer tasks"
+description: "The open to-do list for the project owner: what only you can do, in priority order."
+icon: "clipboard-list"
+---
+
+These are tasks that need the owner's accounts, wallet or judgment. Everything else is already done or documented.
+
+## 1. Publish these docs on Mintlify
+
+<Steps>
+  <Step title="Merge the documentation branch">Merge the pull request that adds `documentation/` into `main`.</Step>
+  <Step title="Create a Mintlify deployment">
+    In the [Mintlify dashboard](https://dashboard.mintlify.com), create a **new** documentation project (don't reuse an existing one like `veri-pay` or `attestable`).
+  </Step>
+  <Step title="Connect GitHub">
+    Install the Mintlify GitHub App on `Nailer/paytrace`, choose branch `main`, and enable **monorepo** mode with docs path `/documentation` (the folder containing `docs.json`).
+  </Step>
+  <Step title="Pick a subdomain">e.g. `paytrace` → `paytrace.mintlify.app`. Optionally add a custom domain later.</Step>
+  <Step title="Check the deploy">Open the site, click through each tab, and confirm the logo shows in light and dark mode.</Step>
+  <Step title="Link it">Add the docs URL to the repository's README and GitHub "About" section, and to the landing page/footer of the app if you like.</Step>
+</Steps>
+
+<Accordion title="In plain English" icon="lightbulb">
+The docs are written and saved in your GitHub repo. To put them online you just tell Mintlify "my docs live in the `documentation` folder of this repo." After that, every time you push changes to that folder, the website updates by itself.
+</Accordion>
+
+## 2. Product and release
+
+| Priority | Task | Why |
+| --- | --- | --- |
+| High | Record the demo video with a **fresh hosted** wallet payment | The only remaining release step; see [Recording a demo](/operate/demo-recording) |
+| High | Confirm hackathon portal requirements (deadline, timezone, track, fields) | Public listings disagreed on Oct 12/13 |
+| Medium | Add a pending path for merchant `match` | Prevents misleading 422s for unfinalized hashes ([limitations](/security/limitations)) |
+| Medium | Enable GitHub private vulnerability reporting | So [security reports](/security/reporting) have a private channel |
+| Medium | Add Vercel Firewall rate limits | Per-instance budgets aren't distributed |
+| Low | Run the Docker image on a real host and complete the checklist | Certify the self-host path |
+| Low | Reformat dense components/handlers | Maintainability |
+| Low | Decide on a docs custom domain (e.g. `docs.<your-domain>`) | Branding |
+
+## 3. Keep docs accurate
+
+When code changes, update the matching page. The most change-sensitive pages:
+
+| If you change… | Update… |
+| --- | --- |
+| Verification rules | [Verification rules](/concepts/verification-rules), [Verification engine](/architecture/verification-engine) |
+| API routes or messages | [API reference](/api-reference/introduction), [Errors](/api-reference/errors), [Troubleshooting](/troubleshooting) |
+| Env vars | [Configuration](/operate/configuration) |
+| Tests | [Testing](/operate/testing) (count and names) |
+| Schema | [Ledger and storage](/architecture/ledger-and-storage) |
+| Releases | [Changelog](/resources/changelog) |

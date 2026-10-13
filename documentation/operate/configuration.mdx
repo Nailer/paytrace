@@ -1,0 +1,85 @@
+---
+title: "Configuration"
+description: "Every environment variable, its validation rules and which mode needs it."
+icon: "settings"
+---
+
+<Info>
+Local use needs **no** secrets. Hosted use requires the origin, password hash, session secret, and either a DB path (single host) or Turso credentials (Vercel).
+</Info>
+
+## Variables
+
+<ParamField path="PAYTRACE_PUBLIC_ORIGIN" type="string">
+  Exact public HTTPS origin, **no trailing slash** (e.g. `https://paytrace-tau.vercel.app`). Setting it switches the server into **hosted mode**: enables session auth, exact-host and origin enforcement, and `Secure` cookies. Validated: `new URL(v).protocol === 'https:'` and `new URL(v).origin === v`. **Required on Vercel.**
+</ParamField>
+
+<ParamField path="PAYTRACE_SESSION_SECRET" type="string">
+  HMAC key for sessions and rate-limit key derivation. **≥ 32 characters.** Required whenever sign-in is used, including locally. Rotating it signs **everyone** out.
+</ParamField>
+
+<ParamField path="PAYTRACE_PASSWORD_HASH" type="string">
+  `<32 hex salt>:<128 hex scrypt-64 digest>` for the original `/owner` workspace. Required in hosted mode. Generate with `scripts/setup-hosting.mjs`.
+</ParamField>
+
+<ParamField path="PAYTRACE_DB_PATH" type="string" default=".data/paytrace.sqlite">
+  SQLite file path for local and single-host/Docker. Docker image default: `/data/paytrace.sqlite`. Ignored when a Turso URL is set.
+</ParamField>
+
+<ParamField path="PAYTRACE_PROD_TURSO_DATABASE_URL" type="string">
+  Preferred production Turso URL (`libsql://…` or `https://…`). Takes precedence over `TURSO_DATABASE_URL`.
+</ParamField>
+
+<ParamField path="PAYTRACE_PROD_TURSO_AUTH_TOKEN" type="string">
+  Token for the production Turso database. Takes precedence over `TURSO_AUTH_TOKEN`.
+</ParamField>
+
+<ParamField path="TURSO_DATABASE_URL" type="string">
+  Generic Turso URL (e.g. from the Vercel integration for preview/dev).
+</ParamField>
+
+<ParamField path="TURSO_AUTH_TOKEN" type="string">
+  Generic Turso token.
+</ParamField>
+
+<ParamField path="PORT" type="number" default="3000">
+  Port for `scripts/start-hosted.mjs` (binds `0.0.0.0`).
+</ParamField>
+
+<ParamField path="VERCEL" type="string">
+  Set automatically by Vercel. Enables fail-closed DB/origin checks and `x-forwarded-for` client keys.
+</ParamField>
+
+<Warning>
+Never prefix any of these with `NEXT_PUBLIC_`. That would bundle secrets into browser JavaScript.
+</Warning>
+
+<Accordion title="In plain English" icon="lightbulb">
+Environment variables are settings you give the server without putting them in the code. The important ones: your website address, a long random secret for logins, a scrambled owner password, and where to store the database. Never put them in anything public.
+</Accordion>
+
+## Matrix
+
+| Variable | Local | Docker / single host | Vercel |
+| --- | --- | --- | --- |
+| `PAYTRACE_PUBLIC_ORIGIN` | — | **Required** | **Required** |
+| `PAYTRACE_SESSION_SECRET` | For sign-in | **Required** | **Required** |
+| `PAYTRACE_PASSWORD_HASH` | — | **Required** | **Required** |
+| `PAYTRACE_DB_PATH` | Optional | **Required** | — |
+| `PAYTRACE_PROD_TURSO_*` or `TURSO_*` | — | Optional | **Required** |
+
+## Generating credentials
+
+```bash
+node scripts/setup-hosting.mjs https://your-host.example.com
+```
+
+Creates (mode `0600`, refuses to overwrite):
+- `.env.hosting` with `PAYTRACE_PUBLIC_ORIGIN`, `PAYTRACE_PASSWORD_HASH`, `PAYTRACE_SESSION_SECRET` (48 random bytes base64url), `PAYTRACE_DB_PATH=/data/paytrace.sqlite`
+- `.env.hosting-password` containing the generated owner password (24 random bytes base64url)
+
+Both are git-ignored. Never record them in a demo.
+
+## Startup validation (`scripts/start-hosted.mjs`)
+
+Refuses to start unless all four hosted variables exist, the origin is HTTPS without trailing slash, the secret is ≥ 32 chars, and the hash matches `^[a-f0-9]{32}:[a-f0-9]{128}$`.

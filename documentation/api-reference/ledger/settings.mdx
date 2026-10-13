@@ -1,0 +1,34 @@
+---
+title: "Save receiving wallet"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: settings. Save the workspace's default receiving wallet."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+Tell PayTrace which wallet address you want to be paid into.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"settings"`.</ParamField>
+<ParamField body="recipient" type="string" required>Nonzero EVM address (`0x` + 40 hex). Stored lowercase.</ParamField>
+
+### Response
+
+`200` with the updated [`LedgerSnapshot`](/api-reference/data-types#ledgersnapshot). Existing requests keep their original recipient.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"settings","recipient":"0x1A2B…9F0E"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 400
+{ "error": "Enter a valid, nonzero wallet address." }
+```
+</ResponseExample>

@@ -1,0 +1,103 @@
+---
+title: "Testing"
+description: "The 46-test suite: how to run it, what each file covers, and testing conventions."
+icon: "flask-conical"
+---
+
+```bash
+npm test   # node --import tsx --test tests/*.test.ts
+```
+
+Tests use Node's built-in `node:test` runner, isolated temporary databases, and **deterministic RPC fixtures**: no network access and no real wallet needed.
+
+<Accordion title="In plain English" icon="lightbulb">
+46 automatic checks run in seconds and prove the important rules still hold: wrong payments are rejected, nothing is double-counted, private data stays private, logins can't be forged. They use fake blockchain data, so they don't need internet.
+</Accordion>
+
+## Suite map
+
+| File | Tests | Focus |
+| --- | --- | --- |
+| `verification.test.ts` | 10 | Chain evidence rules, fail-closed integrity, mint detection, ordering of checks |
+| `ledger.test.ts` | 12 | Matching, claims, funding, pre-request evidence, mismatches, privacy, persistence, local access, cancellation, reviews, login budgets, rollback |
+| `payments.test.ts` | 9 | Exact arithmetic and the simulated `/demo` state machine |
+| `checkout.test.ts` | 7 | Calldata, wallet guards, session tokens, hosted origin, scrypt, CSV |
+| `accounts.test.ts` | 3 | Workspace isolation, per-workspace claims, signup/recovery/tenant isolation |
+| `wallet-auth.test.ts` | 2 | SIWE ownership, binding, replay, expiry, concurrency |
+| `request-draft.test.ts` | 2 | Guest draft validation; publishing uses explicit wallet |
+| `ledger-api.test.ts` | 1 | Full route-handler flow: create, track, note, match; duplicate, cross-origin and oversized writes |
+
+## All test names
+
+<AccordionGroup>
+  <Accordion title="verification.test.ts">
+    - exact canonical finalized USDC transfer is verified
+    - wrong token and wrong recipient cannot be counted
+    - amount mismatch is not verified
+    - failed and unfinalized transactions cannot be counted
+    - missing receipt is unknown rather than a zero balance
+    - canonical hash mismatch, removed log and duplicate indexes fail closed
+    - multiple candidate transfers require manual selection rather than aggregation
+    - mint evidence is explicitly distinguished from customer payment
+    - wrong-chain RPC stops before reading receipts
+    - invalid user input is rejected before RPC traffic
+  </Accordion>
+  <Accordion title="ledger.test.ts">
+    - records verified payment and prevents evidence reuse across requests
+    - historical funding cannot pay an invoice or be imported twice
+    - rejects pre-request evidence, incorrect sender and mint
+    - rejects mismatches and nonfinal receipts without claiming evidence
+    - tracking hides names and notes; changing wallet preserves existing request
+    - database survives closing and reopening
+    - local access blocks remote hosts and cross-site requests
+    - cancellation closes checkout and cannot change a paid request
+    - review acknowledgement never marks a request paid; successful match resolves its reviews
+    - unresolved review items are never hidden by the history limit
+    - login budgets survive reopening and isolate separate client keys
+    - a failed write rolls back its evidence claim
+  </Accordion>
+  <Accordion title="checkout.test.ts">
+    - wallet transfer encodes exact six-decimal USDC with no approval
+    - wrong wallet or refused chain switch never broadcasts
+    - invalid token amounts cannot become wallet calldata
+    - session detects tampering, expiry and wrong secret
+    - hosted workspace requires a valid session and exact origin
+    - password verifier checks salted scrypt digest
+    - CSV includes accurate live status and escapes formulas
+  </Accordion>
+  <Accordion title="payments.test.ts">
+    - token amounts reconcile exactly without floating-point rounding
+    - a matching receipt enters processing and a payout can later return
+    - duplicate events do not append or alter balances
+    - underpayments and overpayments require attention and cannot be marked complete
+    - completion without a matching receipt is rejected
+    - older events cannot rewind a payment
+    - CSV escapes quotes and spreadsheet formulas
+    - notes and inbox archival do not change financial status
+    - invalid requests and malformed saved records are rejected
+  </Accordion>
+  <Accordion title="accounts, wallet-auth, request-draft, ledger-api">
+    - workspaces isolate reads and all request mutations while checkout resolves its owner
+    - historical funding and claims are isolated per workspace
+    - account signup, sessions, recovery rotation and API tenant isolation
+    - wallet authentication verifies ownership, binds browser/origin, prevents replay, and reopens the same workspace
+    - expired challenges and simultaneous replay cannot create sessions
+    - guest drafts validate exact amounts and distinct, nonzero wallets
+    - publishing a draft uses its explicit wallet without changing workspace settings
+    - API creates, tracks, notes and matches a payment; rejects duplicate, cross-origin and oversized writes
+  </Accordion>
+</AccordionGroup>
+
+## Other checks
+
+```bash
+npm run typecheck   # strict TypeScript
+npm run build       # production build
+```
+
+## Conventions for new tests
+
+- Never call the live RPC in unit tests; inject a fixture `rpc` function into `verifyTransfer`.
+- Use a temporary database path per test.
+- Name tests as a **behavioral guarantee** ("X cannot Y"), matching existing style.
+- Never present mocked fixtures as live payment evidence in docs or demos.

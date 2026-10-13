@@ -1,0 +1,32 @@
+---
+title: "Import a funding receipt"
+description: "Save verified evidence of a past transfer to your receiving wallet, separate from customer payments."
+icon: "download"
+---
+
+Use this for faucet top-ups, transfers between your own wallets, or any transfer that predates a request. See [Historical funding](/concepts/historical-funding) for the concept.
+
+<Steps>
+  <Step title="Open Funding receipts">In the sidebar, click **Funding receipts**, then **Import receipt** (or **Import a transfer** on the empty state).</Step>
+  <Step title="Fill the form">
+    - **Receipt label**: 1–120 chars, e.g. `Circle faucet funding`
+    - **Transaction hash**: `0x` + 64 hex
+    - **Expected amount in test USDC**: the exact amount received
+  </Step>
+  <Step title="Submit">PayTrace verifies the transfer to your **current receiving wallet** and, if `verified`, claims it and saves it.</Step>
+</Steps>
+
+## Common failures
+
+| Message | Fix |
+| --- | --- |
+| The recipient matches, but the transferred amount differs… | Enter the exact amount (check decimals) |
+| No positive transfer from the supported USDC contract to this recipient… | Wrong recipient wallet or a non-Circle token |
+| Multiple incoming USDC events need manual review… | The transaction has several transfers to you; it can't be imported automatically |
+| This transfer is already recorded. It cannot be counted twice. | Already imported, or already used to pay a request |
+| The receiving wallet changed. Verify the transfer again. | Your receiving wallet was changed during import; retry |
+| …not yet within the provider's finalized range. | Wait a few seconds and retry |
+
+<Note>
+Funding imports do not create review items. Each funding row links to the transaction on Monadscan (**Verified ↗**).
+</Note>

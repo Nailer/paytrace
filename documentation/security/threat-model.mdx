@@ -1,0 +1,55 @@
+---
+title: "Threat model"
+description: "Assets, adversaries, attacks considered, mitigations, and residual risk."
+icon: "crosshair"
+---
+
+## Assets
+
+| Asset | Why it matters |
+| --- | --- |
+| Request payment status | A false "received" causes a merchant to deliver without payment |
+| Evidence claims | Double-counting inflates revenue |
+| Private request data (customer, notes) | Confidential business information |
+| Sessions and accounts | Control of a workspace |
+| Checkout tokens | Public access to a request |
+| Deployment secrets | Forge sessions, access DB |
+
+## Attacks and mitigations
+
+| # | Attack | Mitigation | Residual risk |
+| --- | --- | --- | --- |
+| 1 | **Fake token** named "USDC" | Contract address allowlist | None known |
+| 2 | **Old transfer replay** to pay a new request | `afterBlock` checkpoint | None known |
+| 3 | **Double spend of evidence** across requests/funding | PK claims in same transaction | None known within a workspace |
+| 4 | **Third-party payment** of exact amount | Expected payer binding | Merchant must know payer in advance |
+| 5 | **Under/overpayment** | Exact base-unit equality | Overpayment must be refunded manually |
+| 6 | **Split payments / multi-event tx** | Single-candidate requirement | Legitimate batched payments unsupported |
+| 7 | **Mint as payment** | `isMint` rejection for requests | — |
+| 8 | **Reorg / unfinalized** | Finalized + canonical checks | Depends on provider honesty |
+| 9 | **Malicious RPC response** | Structural validation, fail-closed | A fully malicious provider could fabricate consistent data |
+| 10 | **Client-forged proof** | Server ignores client proofs; recomputes | — |
+| 11 | **CSRF** | `SameSite=Strict`, origin required on writes, `Sec-Fetch-Site` | — |
+| 12 | **Clickjacking** | `X-Frame-Options: DENY`, `frame-ancestors 'none'` | — |
+| 13 | **Session forgery/tampering** | HMAC-SHA256, constant-time compare | Secret compromise |
+| 14 | **SIWE replay** | Single-use, 5-min, browser- and origin-bound nonce | — |
+| 15 | **Brute-force sign-in** | 5/15 min persistent budget | Shared budget on non-Vercel hosts; shared NATs on Vercel |
+| 16 | **Username enumeration** | Uniform errors and dummy hashing | — |
+| 17 | **Cross-tenant access** | Session-derived workspace, ownership filters | — |
+| 18 | **Claim griefing** (reserving another merchant's public transfer) | Per-workspace claim keys | — |
+| 19 | **Review flooding** via public checkout | 20 items per request, unique per hash | — |
+| 20 | **CSV formula injection** | Prefix and quote escaping | — |
+| 21 | **Request body DoS** | Byte caps, concurrency limits | In-memory limits are per instance |
+| 22 | **Checkout token leakage** | 192-bit tokens, `no-referrer`, `noindex` | Anyone with the link can view it |
+| 23 | **Stolen session cookie** | HttpOnly, Secure, 8 h expiry | No server-side revocation of a single session |
+
+<Accordion title="In plain English" icon="lightbulb">
+This is the list of "what could a bad actor try?" and "how PayTrace stops it." The right column is honest about what's still possible.
+</Accordion>
+
+## Out of scope
+
+- Compromise of the user's wallet or device.
+- Compromise of Vercel, Turso, GitHub, or the Monad RPC provider.
+- Mainnet value and regulatory obligations.
+- Distributed denial-of-service beyond per-instance budgets.

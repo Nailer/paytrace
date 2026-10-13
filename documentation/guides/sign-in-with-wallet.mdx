@@ -1,0 +1,73 @@
+---
+title: "Sign in with your wallet"
+description: "Create or reopen your workspace with a free Sign-In with Ethereum (EIP-4361) signature."
+icon: "key-round"
+---
+
+## What happens
+
+<Steps>
+  <Step title="Choose your account">
+    Click **Continue with wallet** on `/login`. PayTrace calls `eth_requestAccounts` and uses the first returned account.
+  </Step>
+  <Step title="Server issues a challenge">
+    `POST /api/wallet-session {action:"challenge", address}` returns an EIP-4361 message and sets a 5-minute HttpOnly `paytrace_signin` binding cookie.
+  </Step>
+  <Step title="Sign the message">
+    Your wallet shows a `personal_sign` request with text like:
+
+    ```text
+    paytrace-tau.vercel.app wants you to sign in with your Ethereum account:
+    0xAbC…123
+
+    Sign in to your PayTrace workspace. This does not authorize a payment or token access.
+
+    URI: https://paytrace-tau.vercel.app
+    Version: 1
+    Chain ID: 10143
+    Nonce: 4f1c…(48 hex)
+    Issued At: 2026-10-13T10:00:00.000Z
+    Expiration Time: 2026-10-13T10:05:00.000Z
+    ```
+  </Step>
+  <Step title="Server verifies and opens your workspace">
+    `POST /api/wallet-session {action:"verify", id, signature}` checks the signature, domain, URI, chain ID, nonce, expiry and browser binding, consumes the challenge, and sets an 8-hour session cookie. You land on `/workspace` (or back on `/start` if you were publishing a draft).
+  </Step>
+</Steps>
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace sends your wallet a short message: "Sign in to PayTrace. This doesn't authorize any payment." Signing it proves you own the wallet, like a signature on a form. It's free and moves no money. The message expires after 5 minutes and can only be used once, so nobody can reuse it.
+</Accordion>
+
+## Before you sign, check
+
+<Check>The domain at the top is the site you're on.</Check>
+<Check>The statement says it does not authorize a payment or token access.</Check>
+<Check>It's a signature request, not a transaction (no gas fee).</Check>
+
+## Requirements and limits
+
+- An injected EIP-1193 wallet (browser extension or wallet in-app browser).
+- **EOA only.** Smart-contract wallets (EIP-1271) and WalletConnect are not supported yet.
+- The in-app preview browser in some tools has no wallet; use a normal browser.
+- Sign-in attempts are rate-limited: 5 per 15 minutes per action per client key.
+
+## Returning
+
+Sign in with the **same wallet** to reopen the same workspace. A different wallet creates a different workspace.
+
+<Warning>
+Your wallet is your login. If you lose access to it, PayTrace cannot recover your workspace.
+</Warning>
+
+## Errors
+
+| Message | Meaning |
+| --- | --- |
+| Open PayTrace in your wallet's browser… | No `window.ethereum` found |
+| Sign-in cancelled… | You rejected the signature (code 4001) |
+| This sign-in expired or was already used. | Challenge older than 5 min, already consumed, or cookie missing |
+| Invalid sign-in origin or network. | Message URI or chain ID mismatch |
+| The wallet signature could not be verified. | Signature doesn't match the address or message |
+| Too many sign-in attempts. Try again in 15 minutes. | Rate limit reached |
+| Sign-in is not configured on this host. | `PAYTRACE_SESSION_SECRET` missing or shorter than 32 chars |

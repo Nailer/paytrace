@@ -1,0 +1,43 @@
+---
+title: "Privacy and data handling"
+description: "What PayTrace stores, who can see it, and what is public by nature."
+icon: "eye-off"
+---
+
+## What is stored
+
+| Data | Stored | Visible to |
+| --- | --- | --- |
+| Wallet addresses (merchant, payer) | Yes | Merchant; payer via checkout |
+| Customer name / reference | Yes | **Merchant only** |
+| Description, amount | Yes | Merchant; anyone with checkout link |
+| Internal notes | Yes | **Merchant only** |
+| Transaction hashes and proofs | Yes | Merchant; payer once received |
+| Password hash, recovery hash | Yes (hashed) | Nobody |
+| SIWE challenges | Short-lived | Nobody |
+| Client IPs | **Never in plaintext** (HMAC key only, for rate limits) | Nobody |
+| Email addresses | **Not collected** | — |
+| Private keys / seed phrases | **Never** | — |
+
+## Public by nature
+
+Everything onchain is public: addresses, amounts and transaction history are visible to anyone on a block explorer, independent of PayTrace. Customer names and notes are **never** written onchain.
+
+<Accordion title="In plain English" icon="lightbulb">
+Blockchain payments are like postcards: anyone can read the amount and the addresses. PayTrace doesn't make that more public, and it keeps your private labels (customer names, notes) off the blockchain and off the payment page.
+</Accordion>
+
+## Browser storage
+
+| Key | Storage | Content | Lifetime |
+| --- | --- | --- | --- |
+| `paytrace-request-draft-v1` | `sessionStorage` | Draft request | Until tab closes or published |
+| `paytrace-submission-<token>` | `localStorage` | Submitted tx hash | Until verified/closed |
+| `paytrace_session` | HttpOnly cookie | Signed session | 8 hours |
+| `paytrace_signin` | HttpOnly cookie | SIWE binding secret | 5 minutes |
+
+No analytics or third-party tracking scripts are included. Fonts are self-hosted.
+
+## Exports and backups
+
+CSV exports and database backups contain private data (and backups contain checkout tokens). Store them securely.

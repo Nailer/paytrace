@@ -1,0 +1,28 @@
+---
+title: "Rate limits"
+description: "Concurrency and request budgets per endpoint, and how they behave across instances."
+icon: "gauge"
+---
+
+| Endpoint | Limit | Scope | Storage | On exceed |
+| --- | --- | --- | --- | --- |
+| `POST /api/ledger` | 3 concurrent operations | Per server instance | Memory | `429 The ledger is busy. Please retry shortly.` |
+| `POST /api/track/{token}` | 3 concurrent **and** 45 per 60 s window | Per server instance | Memory | `429 Verification is busy. Retry shortly.` |
+| `POST /api/verify` | 3 concurrent **and** 20 per 60 s window | Per server instance | Memory | `429 …` + `Retry-After: 30` |
+| `POST /api/session` | 5 attempts per 15 min | Per action × client key | **Database** | `429 Too many sign-in attempts…` |
+| `POST /api/wallet-session` | 5 attempts per 15 min | Per action (`challenge`/`verify`) × client key | **Database** | `429 Too many sign-in attempts…` |
+| Review items | 20 per request | Per request | Database | Silently not inserted |
+| Upstream Monad RPC | Provider-defined | — | — | `429 The public RPC is rate limited…` |
+
+<Accordion title="In plain English" icon="lightbulb">
+To stay healthy, PayTrace only handles a few heavy operations at once and caps how often anyone can try to log in. If you hit a limit, wait a moment and try again.
+</Accordion>
+
+## Client key for sign-in limits
+
+- **Vercel:** first IP in `x-forwarded-for` (set by Vercel's edge), HMAC'd with the session secret.
+- **Other hosts:** the constant `single-host`, so **all users share one budget per action**. Configure edge throttling on such hosts.
+
+## Caveats
+
+In-memory budgets reset on restart and are **not shared** across serverless instances or replicas. For wider public exposure, add platform-level (edge/WAF) rate limits.

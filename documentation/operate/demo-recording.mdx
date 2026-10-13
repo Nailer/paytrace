@@ -1,0 +1,28 @@
+---
+title: "Recording a demo"
+description: "A three-minute script for an honest, real-payment demo video."
+icon: "video"
+---
+
+Record the working `/workspace` and a **real** customer checkout. Do not use `/demo` or present unit-test fixtures as transactions.
+
+## Preparation
+
+- Use the hosted app, or a local production build (`npm run build && npm start`).
+- Use a browser with your wallet extension (in-app previews may lack a wallet).
+- Two accounts: a receiving wallet, and a payer with test USDC + test MON.
+- Create a request for **1 test USDC** with the payer's address **before** sending anything.
+- Open checkout in one tab, workspace in another.
+- Rehearse with a separate request; record with a fresh request and fresh transfer.
+- Hide unrelated tabs, passwords, recovery phrases and hosting credentials.
+
+## Script
+
+| Time | Segment | Show / say |
+| --- | --- | --- |
+| 0:00–0:25 | The problem | "Receiving a blockchain transaction is easy. Knowing which request it belongs to, whether the amount is correct and whether it has finalized takes work." Show the workspace and the split between requests and funding. |
+| 0:25–0:55 | A real request | Create a request; explain amount and expected payer; open checkout. Point out that internal notes don't appear. |
+| 0:55–1:40 | Pay and verify | Click **Pay with your wallet**, approve the exact transfer, show the real hash and confirmation. If no wallet provider, send manually and paste the hash. Wait for the **actual** Received. Never cut to a fabricated result. |
+| 1:40–2:15 | Close the loop | Show the auto-refreshed workspace, receipt download/print and CSV export. "The same transfer can't pay two requests." |
+| 2:15–2:40 | Exceptions | Show **Needs review** if a genuine failure exists; otherwise explain the rule via `/guide`. Don't invent a problem. |
+| 2:40–3:00 | Close honestly | "A noncustodial payment tracking workflow on Monad testnet: request, checkout, verification and receipt. Test tokens have no monetary value and bank payouts are outside this demo." Show the real public URL if hosted. |

@@ -1,0 +1,183 @@
+---
+title: "Glossary"
+description: "Every term used in PayTrace and these docs, with a technical definition and a plain-English explanation."
+icon: "book-a"
+---
+
+<AccordionGroup>
+  <Accordion title="afterBlock">
+    **Technical:** The Monad block number captured at request creation; evidence must be in a block strictly greater than it.
+
+    **Plain English:** The blockchain "page number" when you made the request. Only payments on later pages count.
+  </Accordion>
+  <Accordion title="Base units">
+    **Technical:** The integer representation of a token amount; for USDC, 1 USDC = 1,000,000 base units (6 decimals).
+
+    **Plain English:** Counting in millionths of a dollar so there's never any rounding.
+  </Accordion>
+  <Accordion title="Canonical block">
+    **Technical:** The block at a given height on the provider's current best chain; verified by matching hash.
+
+    **Plain English:** The official version of a blockchain page.
+  </Accordion>
+  <Accordion title="Chain ID">
+    **Technical:** EIP-155 network identifier; Monad Testnet is 10143 (`0x279f`).
+
+    **Plain English:** The network's ID number, so wallets don't confuse networks.
+  </Accordion>
+  <Accordion title="ChainProof">
+    **Technical:** PayTrace's structured verification result: outcome, summary, block data, finality and candidate transfers.
+
+    **Plain English:** The evidence file for one transaction.
+  </Accordion>
+  <Accordion title="Checkout / tracking token">
+    **Technical:** A 192-bit random capability token (48 hex chars) addressing `/track/{token}`.
+
+    **Plain English:** The secret code in the payment link.
+  </Accordion>
+  <Accordion title="Claim">
+    **Technical:** A row in `claims` reserving an evidence ID for one request or funding record.
+
+    **Plain English:** Marking a payment as "used" so it can't count twice.
+  </Accordion>
+  <Accordion title="CSRF">
+    **Technical:** Cross-Site Request Forgery: a malicious site causing a victim's browser to send authenticated requests.
+
+    **Plain English:** A trick where another website makes your browser act on your behalf. PayTrace blocks it.
+  </Accordion>
+  <Accordion title="EIP-1193">
+    **Technical:** The JavaScript provider API (`window.ethereum.request`) wallets inject into web pages.
+
+    **Plain English:** The standard way websites talk to your wallet.
+  </Accordion>
+  <Accordion title="EIP-4361 (SIWE)">
+    **Technical:** Sign-In with Ethereum: a standard human-readable message format for wallet-based authentication.
+
+    **Plain English:** "Log in by signing a message with your wallet."
+  </Accordion>
+  <Accordion title="EOA">
+    **Technical:** Externally Owned Account: an address controlled by a private key, not contract code.
+
+    **Plain English:** A normal wallet account.
+  </Accordion>
+  <Accordion title="ERC-20">
+    **Technical:** The fungible token standard defining `transfer`, `balanceOf`, `Transfer` events, etc.
+
+    **Plain English:** The common rulebook most crypto tokens (like USDC) follow.
+  </Accordion>
+  <Accordion title="Evidence ID">
+    **Technical:** `chainId:txHash:logIndex`, uniquely identifying one transfer event.
+
+    **Plain English:** A payment's fingerprint.
+  </Accordion>
+  <Accordion title="Expected payer">
+    **Technical:** The only address whose transfer can satisfy a request.
+
+    **Plain English:** The wallet your customer must pay from.
+  </Accordion>
+  <Accordion title="Faucet">
+    **Technical:** A service dispensing free testnet tokens.
+
+    **Plain English:** A free tap for play money.
+  </Accordion>
+  <Accordion title="Finality / finalized">
+    **Technical:** The guarantee that a block will not be reverted; exposed through the `finalized` block tag.
+
+    **Plain English:** The point where a payment is permanent.
+  </Accordion>
+  <Accordion title="Gas / MON">
+    **Technical:** Execution fee paid in the native asset; MON on Monad.
+
+    **Plain English:** The small network fee for sending anything.
+  </Accordion>
+  <Accordion title="Historical funding">
+    **Technical:** Verified transfers recorded separately from requests, without payer or block-ordering constraints.
+
+    **Plain English:** Deposits that aren't customer payments.
+  </Accordion>
+  <Accordion title="HMAC">
+    **Technical:** Hash-based Message Authentication Code; PayTrace uses HMAC-SHA256 to sign sessions and key rate limits.
+
+    **Plain English:** A tamper-proof seal only the server can create.
+  </Accordion>
+  <Accordion title="HttpOnly / Secure / SameSite cookies">
+    **Technical:** Cookie attributes preventing JavaScript access, non-HTTPS transmission, and cross-site sending.
+
+    **Plain English:** Safety settings that keep your login cookie from being stolen or misused.
+  </Accordion>
+  <Accordion title="Legacy workspace">
+    **Technical:** The original single workspace (`legacy`), used by `/owner` and local mode.
+
+    **Plain English:** The first, original dashboard.
+  </Accordion>
+  <Accordion title="libSQL / Turso">
+    **Technical:** An open-source SQLite fork and its hosted database service.
+
+    **Plain English:** The database PayTrace uses, either as a local file or in the cloud.
+  </Accordion>
+  <Accordion title="Log / event">
+    **Technical:** Data emitted by a contract during execution, stored in the receipt with topics and data.
+
+    **Plain English:** A note a program writes on the blockchain, like "A sent B 10 USDC."
+  </Accordion>
+  <Accordion title="Mint">
+    **Technical:** A `Transfer` from the zero address, creating new tokens.
+
+    **Plain English:** Brand-new coins being created (e.g. by a faucet), not a payment from a person.
+  </Accordion>
+  <Accordion title="Monad">
+    **Technical:** A high-performance EVM-compatible Layer-1 blockchain.
+
+    **Plain English:** The blockchain PayTrace runs on.
+  </Accordion>
+  <Accordion title="Noncustodial">
+    **Technical:** The service never controls user funds or keys.
+
+    **Plain English:** PayTrace never holds your money.
+  </Accordion>
+  <Accordion title="Receipt">
+    **Technical:** `eth_getTransactionReceipt` result: status, block and logs.
+
+    **Plain English:** The official result of a transaction.
+  </Accordion>
+  <Accordion title="Reorg">
+    **Technical:** Chain reorganization replacing recent blocks with a different branch.
+
+    **Plain English:** When recent blockchain pages get swapped out. Finality prevents this from affecting PayTrace.
+  </Accordion>
+  <Accordion title="Review item">
+    **Technical:** A `reviews` row recording why a submitted transfer failed to satisfy a request.
+
+    **Plain English:** A note in your inbox explaining a wrong payment.
+  </Accordion>
+  <Accordion title="RPC">
+    **Technical:** JSON-RPC endpoint exposing blockchain data and transaction submission.
+
+    **Plain English:** The service PayTrace asks for blockchain information.
+  </Accordion>
+  <Accordion title="scrypt">
+    **Technical:** A memory-hard password hashing function.
+
+    **Plain English:** A slow-on-purpose scrambler that makes stolen password data hard to crack.
+  </Accordion>
+  <Accordion title="Testnet">
+    **Technical:** A public network for testing whose tokens have no market value.
+
+    **Plain English:** A practice blockchain with free play money.
+  </Accordion>
+  <Accordion title="Transaction hash">
+    **Technical:** 32-byte Keccak-256 identifier of a transaction.
+
+    **Plain English:** A payment's tracking number.
+  </Accordion>
+  <Accordion title="USDC">
+    **Technical:** Circle's dollar-referenced stablecoin; test version at `0x534b…43A3` with 6 decimals.
+
+    **Plain English:** A digital dollar.
+  </Accordion>
+  <Accordion title="Workspace">
+    **Technical:** The tenant boundary scoping a merchant's settings, requests, funding, reviews and claims.
+
+    **Plain English:** Your private dashboard.
+  </Accordion>
+</AccordionGroup>

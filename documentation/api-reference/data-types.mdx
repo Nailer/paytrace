@@ -1,0 +1,101 @@
+---
+title: "Data types"
+description: "Schemas for every object returned by the API: snapshots, requests, tracking records, proofs, funding and reviews."
+icon: "braces"
+---
+
+## LedgerSnapshot
+
+Returned by `GET /api/ledger` and every successful `POST /api/ledger`.
+
+<ResponseField name="workspaceName" type="string">
+  `"Original workspace"` for legacy, otherwise the account name (e.g. `"Workspace 0x1a2b…9f0e"`).
+</ResponseField>
+<ResponseField name="recipient" type="string">
+  Saved receiving wallet (lowercase) or `""`.
+</ResponseField>
+<ResponseField name="requests" type="RequestRecord[]">
+  Newest first.
+</ResponseField>
+<ResponseField name="funding" type="FundingRecord[]">
+  Newest first.
+</ResponseField>
+<ResponseField name="reviews" type="ReviewRecord[]">
+  All unresolved + up to 100 most recent resolved; unresolved first.
+</ResponseField>
+
+## RequestRecord
+
+<ResponseField name="id" type="string">`PT-<uuid>`</ResponseField>
+<ResponseField name="token" type="string">48-hex checkout token. Build the link as `/track/{token}`.</ResponseField>
+<ResponseField name="customer" type="string">Private reference (1–80).</ResponseField>
+<ResponseField name="description" type="string">Public description (1–240).</ResponseField>
+<ResponseField name="amount" type="string">6-decimal string, e.g. `"25.000000"`.</ResponseField>
+<ResponseField name="recipient" type="string">Receiving wallet, lowercase.</ResponseField>
+<ResponseField name="payer" type="string">Expected payer, lowercase.</ResponseField>
+<ResponseField name="createdAt" type="string">ISO 8601.</ResponseField>
+<ResponseField name="afterBlock" type="number">Monad block at creation; evidence must be strictly later.</ResponseField>
+<ResponseField name="status" type="'awaiting' | 'received' | 'cancelled'" />
+<ResponseField name="proof" type="ChainProof | null">Set when received.</ResponseField>
+<ResponseField name="notes" type="{ text: string; at: string }[]">Internal notes.</ResponseField>
+
+## TrackingRecord
+
+Public projection returned by `/api/track/{token}`. **Omits** `customer`, `notes`, `token`, `afterBlock`.
+
+<ResponseField name="id" type="string" />
+<ResponseField name="description" type="string" />
+<ResponseField name="amount" type="string" />
+<ResponseField name="recipient" type="string" />
+<ResponseField name="payer" type="string" />
+<ResponseField name="status" type="'awaiting' | 'received' | 'cancelled'" />
+<ResponseField name="createdAt" type="string" />
+<ResponseField name="transactionHash" type="string | null">`proof.transactionHash` when received.</ResponseField>
+<ResponseField name="proof" type="ChainProof | null" />
+
+## ChainProof
+
+<ResponseField name="outcome" type="string">
+  One of `verified`, `amount_mismatch`, `no_transfer`, `not_finalized`, `reverted`, `unavailable`.
+</ResponseField>
+<ResponseField name="summary" type="string">Human-readable explanation.</ResponseField>
+<ResponseField name="transactionHash" type="string">Lowercase.</ResponseField>
+<ResponseField name="chainId" type="number">Always `10143`.</ResponseField>
+<ResponseField name="tokenAddress" type="string">`0x534b2f3A21130d7a60830c2Df862319e593943A3`.</ResponseField>
+<ResponseField name="recipient" type="string">Recipient checked.</ResponseField>
+<ResponseField name="expectedAmount" type="string">Amount checked.</ResponseField>
+<ResponseField name="receivedAmount" type="string | null">Amount of the single candidate, `"0"`, or `null`.</ResponseField>
+<ResponseField name="blockNumber" type="number | null" />
+<ResponseField name="blockHash" type="string | null" />
+<ResponseField name="finalizedThrough" type="number | null">Provider's finalized head at check time.</ResponseField>
+<ResponseField name="checkedAt" type="string">ISO 8601.</ResponseField>
+<ResponseField name="transfers" type="ChainTransfer[]">
+  <Expandable title="ChainTransfer">
+    <ResponseField name="evidenceId" type="string">`10143:<txHash>:<logIndex>`</ResponseField>
+    <ResponseField name="logIndex" type="number" />
+    <ResponseField name="from" type="string">Lowercase sender.</ResponseField>
+    <ResponseField name="to" type="string">Lowercase recipient.</ResponseField>
+    <ResponseField name="amount" type="string">6-decimal string.</ResponseField>
+    <ResponseField name="isMint" type="boolean">`true` if `from` is the zero address.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Accordion title="In plain English" icon="lightbulb">
+A `ChainProof` is PayTrace's "evidence file" for one transaction: what it checked, what it found, and where on the blockchain it found it. `outcome` is the verdict; `summary` explains it in a sentence.
+</Accordion>
+
+## FundingRecord
+
+<ResponseField name="id" type="string">UUID.</ResponseField>
+<ResponseField name="label" type="string">1–120 chars.</ResponseField>
+<ResponseField name="proof" type="ChainProof">Always `verified`.</ResponseField>
+<ResponseField name="createdAt" type="string" />
+
+## ReviewRecord
+
+<ResponseField name="id" type="string">UUID.</ResponseField>
+<ResponseField name="requestId" type="string" />
+<ResponseField name="transactionHash" type="string">Lowercase.</ResponseField>
+<ResponseField name="reason" type="string">≤ 500 chars.</ResponseField>
+<ResponseField name="at" type="string">ISO 8601.</ResponseField>
+<ResponseField name="resolved" type="boolean" />

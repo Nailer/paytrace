@@ -1,0 +1,75 @@
+---
+title: "Request lifecycle internals"
+description: "Code-level trace of a request from POST /api/ledger to a committed received state."
+icon: "git-branch"
+---
+
+## 1. Creation
+
+```ts src/app/api/ledger/route.ts
+case 'create': {
+  const rpc = createRpc();
+  const chain = await rpc<string>('eth_chainId', []);
+  if (chain !== '0x279f') throw new LedgerError('The provider is not connected to Monad testnet.', 502);
+  const block = await rpc<string>('eth_blockNumber', []);
+  await db.create(body, Number(BigInt(block)));
+}
+```
+
+`Ledger.create` validates, normalizes, generates `id = PT-<uuid>` and `token = randomBytes(24).hex`, then inside `atomic()` inserts into `requests` and `ownership`.
+
+## 2. Checkout render
+
+`/track/[token]/page.tsx` is a dynamic server component on the Node runtime. It calls `ledger().tracking(token)`, which returns a **projection** without `customer`, `notes` or `token`, or `notFound()`.
+
+## 3. Payment and verification request
+
+```ts src/app/api/track/[token]/route.ts (condensed)
+requireSite(request);                         // host/origin checks
+rateLimit(active < 3 && count < 45 per 60s);
+const db  = await ledger().forTracking(token); // resolve owning workspace
+const row = await db.tracking(token);
+if (row.status !== 'awaiting') return row;     // idempotent for closed requests
+const proof = await verifyTransfer({ transactionHash, recipient: row.recipient, expectedAmount: row.amount });
+if (proof.outcome === 'unavailable' || proof.outcome === 'not_finalized') return 202 { pending: true };
+try { await db.match(row.id, proof); }
+catch (e) { if (e.status === 422) await db.review(row.id, proof.transactionHash, e.message); throw e; }
+return db.tracking(token);
+```
+
+Note that the **server** chooses `recipient` and `expectedAmount` from the stored request. The client only supplies the hash.
+
+<Accordion title="In plain English" icon="lightbulb">
+The payment page only sends PayTrace the tracking number. PayTrace looks up what the request expects from its own records, so a tampered browser can't sneak in a different amount or address.
+</Accordion>
+
+## 4. Atomic match
+
+```ts src/lib/ledger.ts (condensed)
+return this.atomic(async tx => {
+  const row = await this.readRequest(id, tx);          // scoped to workspace
+  assert(row.status === 'awaiting');                    // 409
+  assert(proof.recipient === row.recipient && units(proof.expectedAmount) === units(row.amount)); // 422
+  assert(proof.blockNumber > row.afterBlock);           // 422
+  assert(proof.transfers.length === 1 && !t.isMint && t.from === row.payer); // 422
+  await this.claim(proof, row.id, tx);                  // 422/409; INSERT claims
+  await UPDATE requests SET data = {...row, status:'received', proof};
+  await UPDATE reviews SET resolved = 1 WHERE request_id = id;
+});
+```
+
+`atomic()` opens a libSQL `write` transaction, commits on success, rolls back on any throw, and always closes.
+
+## 5. Merchant sees it
+
+`live-workspace.tsx` polls `GET /api/ledger` every 15 s; `snapshot()` returns the updated request.
+
+## Timing budget
+
+| Step | Bound |
+| --- | --- |
+| Each RPC call | 12 s timeout (`AbortSignal.timeout(12000)`) |
+| Checkout polling | 8 s interval × 30 attempts = 4 min |
+| Checkout status refresh (independent) | `GET /api/track/{token}` every 15 s while awaiting |
+| Workspace refresh | 15 s |
+| Session lifetime | 8 h |

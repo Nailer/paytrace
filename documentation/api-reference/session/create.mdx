@@ -1,0 +1,47 @@
+---
+title: "Password sign-in, signup, recovery and owner"
+api: "POST https://paytrace-tau.vercel.app/api/session"
+description: "Legacy password account actions that issue a session cookie."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+The older username-and-password login. New users should use wallet sign-in instead.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" default="signin">One of `signin`, `signup`, `recover`, `owner`.</ParamField>
+<ParamField body="username" type="string">Required for `signin`, `signup`, `recover`. 3–30 chars `[a-z0-9][a-z0-9_-]{2,29}` (case-insensitive).</ParamField>
+<ParamField body="password" type="string" required>`signin`/`owner`: ≤ 256 chars. `signup`/`recover`: new password 12–128 chars.</ParamField>
+<ParamField body="name" type="string">`signup` only. Workspace name, 1–60 chars.</ParamField>
+<ParamField body="recoveryCode" type="string">`recover` only.</ParamField>
+
+### Response
+
+<ResponseField name="ok" type="boolean">`true`</ResponseField>
+<ResponseField name="recoveryCode" type="string">Present for `signup` and `recover`. Show it once; it's stored only as a SHA-256 hash.</ResponseField>
+
+Sets `paytrace_session` (8 h). Each call counts toward the 5-per-15-min budget for its action.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/session \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -d '{"action":"signin","username":"maplestudio","password":"…"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{ "ok": true }
+```
+
+```json 200 recover
+{ "ok": true, "recoveryCode": "q8Zf…(43 chars)" }
+```
+
+```json 401
+{ "error": "Username or password is incorrect." }
+```
+</ResponseExample>

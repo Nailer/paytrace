@@ -1,0 +1,42 @@
+---
+title: "Import funding receipt"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: import. Verify and save a historical transfer to the receiving wallet as funding."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+Save proof of a deposit that isn't a customer payment (like a faucet top-up).
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"import"`.</ParamField>
+<ParamField body="transactionHash" type="string" required>`0x` + 64 hex.</ParamField>
+<ParamField body="amount" type="string" required>Exact amount received, decimal string.</ParamField>
+<ParamField body="label" type="string" required>1–120 chars.</ParamField>
+
+Verification uses the workspace's **current** receiving wallet. Mints are accepted; outcome must be `verified`.
+
+### Response
+
+`200` with the updated snapshot; the new record is first in `funding`.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"import","transactionHash":"0x…","amount":"20","label":"Circle faucet funding"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 409
+{ "error": "The receiving wallet changed. Verify the transfer again." }
+```
+
+```json 422
+{ "error": "The recipient matches, but the transferred amount differs from the requested amount." }
+```
+</ResponseExample>

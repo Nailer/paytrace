@@ -1,0 +1,120 @@
+---
+title: "Verification rules"
+description: "The complete, ordered rule set a transfer must satisfy before PayTrace records it as payment."
+icon: "shield-check"
+---
+
+PayTrace verification runs in two layers. **Layer 1** (`verifyTransfer` / `inspectReceipt` in `src/lib/chain-verification.ts`) answers: *"Does finalized chain evidence show exactly this amount of allowlisted USDC reaching this recipient in this transaction?"* **Layer 2** (`Ledger.match` and `Ledger.claim` in `src/lib/ledger.ts`) answers: *"Is that evidence valid for this specific request, and has it never been used?"*
+
+<Accordion title="In plain English" icon="lightbulb">
+Step one checks the blockchain: "Did the right coin actually arrive in the right amount, permanently?" Step two checks the request: "Did it come from the right person, after the request was made, and has this payment never been used before?" Both must say yes.
+</Accordion>
+
+## Layer 1 — Chain evidence
+
+Rules are evaluated in this order. Any thrown error aborts with **no state change**.
+
+<AccordionGroup>
+  <Accordion title="1. Input validation (before any RPC call)" icon="text-cursor-input">
+    - `transactionHash` matches `^0x[0-9a-fA-F]{64}$`
+    - `recipient` matches `^0x[0-9a-fA-F]{40}$` and is not the zero address
+    - `expectedAmount` parses as `^\d{1,12}(\.\d{1,6})?$` and is `> 0`
+
+    Inputs are trimmed and lowercased. Invalid input returns **400** without touching the network.
+
+    **Plain English:** PayTrace checks the hash and address are shaped correctly and the amount is sensible before bothering the blockchain.
+  </Accordion>
+  <Accordion title="2. Correct network" icon="network">
+    `eth_chainId` must equal `10143`. Otherwise: *"The connected provider is not Monad testnet. Verification stopped."*
+
+    **Plain English:** make sure we're reading the right blockchain.
+  </Accordion>
+  <Accordion title="3. Receipt exists" icon="receipt">
+    `eth_getTransactionReceipt(hash)`. If `null`, outcome is `unavailable` ("may be pending or absent"). This is reported as *unknown*, never as zero or failure.
+
+    **Plain English:** if the payment isn't on the blockchain yet, PayTrace says "not yet," not "you didn't pay."
+  </Accordion>
+  <Accordion title="4. Receipt self-consistency" icon="equal">
+    The receipt's `transactionHash` must equal the requested hash; `blockHash` must be a valid 32-byte hash; `blockNumber` must be a valid hex quantity and a safe integer.
+  </Accordion>
+  <Accordion title="5. Canonical block" icon="link">
+    `eth_getBlockByNumber(receipt.blockNumber)` must return a block whose `hash` equals `receipt.blockHash` and whose `number` equals the receipt's block. Otherwise: *"The receipt no longer matches the canonical block. Check again."*
+
+    **Plain English:** confirm the payment is on the official chain, not on a discarded fork.
+  </Accordion>
+  <Accordion title="6. Success status" icon="circle-check">
+    `status == 0x0` → outcome `reverted` (received amount `0`). Any status other than `0x1` throws.
+
+    **Plain English:** a failed transaction moved no money, so it can't count.
+  </Accordion>
+  <Accordion title="7. Finality" icon="lock">
+    `eth_getBlockByNumber("finalized")` must return a valid block. If the receipt's block number is greater than the finalized block number, outcome is `not_finalized`.
+
+    **Plain English:** wait until the payment is permanent.
+  </Accordion>
+  <Accordion title="8. Log filtering and integrity" icon="list-filter">
+    For each log in the receipt:
+    - Skip unless `address` equals the allowlisted USDC contract (case-insensitive).
+    - Skip unless `topics[0]` equals the `Transfer` signature `0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`.
+    - Throw if `topics.length != 3`, if a topic is not a left-padded 20-byte address, or if `data` is not exactly 32 bytes.
+    - Throw if `removed` is true, or the log's `transactionHash` / `blockHash` disagree with the receipt.
+    - Throw on duplicate `logIndex`.
+    - Skip unless the decoded `to` equals the recipient.
+    - Skip zero-value transfers.
+
+    Each surviving log becomes a candidate with evidence ID `10143:<txHash>:<logIndex>` and `isMint = (from == 0x0…0)`.
+
+    **Plain English:** read only real USDC "transfer" notes addressed to the merchant, and reject anything that looks tampered with or inconsistent.
+  </Accordion>
+  <Accordion title="9. Amount and ambiguity" icon="scale">
+    - No candidates → `no_transfer`.
+    - Exactly **one** candidate and its amount equals the expected amount in base units → `verified`.
+    - Otherwise → `amount_mismatch`. If there were multiple candidates: *"Multiple incoming USDC events need manual review. They have not been combined or assigned to a payment."*
+
+    **Plain English:** exactly one matching payment of exactly the right amount. Two payments that add up to the total don't count; they go to review.
+  </Accordion>
+</AccordionGroup>
+
+### Layer 1 outcomes
+
+| Outcome | Meaning | Checkout behavior |
+| --- | --- | --- |
+| `verified` | One finalized allowlisted USDC transfer to recipient with exact amount | Proceeds to Layer 2 |
+| `amount_mismatch` | Recipient matched, amount differs, or multiple candidates | 422 + review item |
+| `no_transfer` | No positive allowlisted USDC transfer to recipient | 422 + review item |
+| `reverted` | Transaction failed | 422 + review item |
+| `not_finalized` | Included but not yet final | **202 pending**, keep polling |
+| `unavailable` | No receipt yet | **202 pending**, keep polling |
+
+## Layer 2 — Request binding and claim
+
+Evaluated inside a single **write transaction** (`Ledger.match`):
+
+| # | Rule | Failure (HTTP) |
+| --- | --- | --- |
+| 1 | Request exists in the caller's workspace | `Payment request not found.` (404) |
+| 2 | Status is `awaiting` | `This request is no longer awaiting payment.` (409) |
+| 3 | Proof recipient = request recipient, and proof expected amount = request amount | `The evidence does not match this request.` (422) |
+| 4 | `proof.blockNumber > request.afterBlock` | `This transfer predates the request. Import it as historical funding instead.` (422) |
+| 5 | Exactly one transfer, not a mint, `from == request.payer` | `The transfer must come from this request's expected payer wallet.` (422) |
+| 6 | `proof.outcome == verified` and one transfer | The proof summary (422) |
+| 7 | Defense in depth: chain ID, token address, `to`, amounts, `receivedAmount`, finalized bounds all re-checked | `Inconsistent transfer evidence. Nothing was recorded.` (422) |
+| 8 | Evidence ID not already in `claims` (scoped per workspace) | `This transfer is already recorded. It cannot be counted twice.` (409) |
+
+On success: insert claim → set `status = received`, store proof → mark the request's reviews resolved → **commit**. If anything throws, the transaction rolls back, including the claim (covered by test *"a failed write rolls back its evidence claim"*).
+
+<Accordion title="In plain English" icon="lightbulb">
+After confirming the blockchain part, PayTrace checks: Is this request still open? Did it come from the expected payer? Was it sent after the request was created? Is it a real payment (not freshly printed test coins)? Has this exact payment been used before? Only when everything passes does it save, and it saves all the pieces together or none at all.
+</Accordion>
+
+## Rules at a glance
+
+<Check>Chain ID is 10143</Check>
+<Check>Transaction succeeded (`status 0x1`)</Check>
+<Check>Block is canonical and within the provider's finalized range</Check>
+<Check>Token contract is Circle test USDC `0x534b…43A3`</Check>
+<Check>Exactly one transfer to the recipient</Check>
+<Check>Amount equals the request amount to 6 decimals</Check>
+<Check>Sender equals the expected payer and is not a mint</Check>
+<Check>Block is strictly after the request's `afterBlock`</Check>
+<Check>Event has never been claimed in this workspace</Check>

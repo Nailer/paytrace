@@ -1,0 +1,36 @@
+---
+title: "Demo prototype (/demo)"
+description: "The archived Sprint-1 simulated workspace: what it is, what it isn't, and its domain model."
+icon: "flask-conical"
+---
+
+<Warning>
+`/demo` is a **clearly labelled design prototype** with fictional data. It is **not** the product's operational flow and is never mixed with real chain evidence. Do not use it in demos as if it were real.
+</Warning>
+
+## Purpose
+
+Sprint 1 explored the interface and workflow before any chain integration: overview, payment list and filters, exception inbox, activity, connections, request creation, detail timeline, customer preview, CSV export and **simulated payout provider events** (Bridge sandbox, Brale sandbox). Records persist in browser storage only.
+
+<Accordion title="In plain English" icon="lightbulb">
+Before connecting to the real blockchain, the team built a mock-up with pretend customers to design the screens. It's kept at `/demo` for reference. Nothing there is real.
+</Accordion>
+
+## Simulated model (`src/lib/payments.ts`)
+
+Statuses: `awaiting` → `processing` (matching receipt) or `attention` (under/overpayment) → `completed` or `returned`.
+
+| Rule | Enforcement |
+| --- | --- |
+| Duplicate event IDs | Ignored, never double-applied |
+| Out-of-order events | Older events can't rewind state |
+| Receipt only when awaiting | Throws otherwise |
+| Completion requires processing | Throws otherwise |
+| Return only after submission | Throws otherwise |
+| Archive / notes | Never change financial status |
+
+`src/lib/sample.ts` seeds 16 fictional customers, each labelled *"Sample payment for a fictional customer"*, with simulated events stating that no actual funds moved.
+
+## Tests
+
+`tests/payments.test.ts` (9 tests) covers exact reconciliation, duplicate events, under/overpayment, invalid completion, stale events, CSV escaping, note/archive semantics and input validation.

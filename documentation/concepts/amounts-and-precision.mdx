@@ -1,0 +1,64 @@
+---
+title: "Amounts and precision"
+description: "How PayTrace parses, stores, compares and displays USDC amounts with exact integer arithmetic."
+icon: "hash"
+---
+
+## Why not floating point
+
+IEEE-754 binary floating point cannot represent most decimal fractions exactly (`0.1 + 0.2 !== 0.3`). For money, that produces silent rounding errors. PayTrace converts every amount into an arbitrary-precision **`bigint` count of base units**, where 1 USDC = 10⁶ base units, and compares integers.
+
+<Accordion title="In plain English" icon="lightbulb">
+Computers are surprisingly bad at decimals. Ask most programs to add 0.1 and 0.2 and you get 0.30000000000000004. For money that's unacceptable, so PayTrace counts in the smallest unit (one millionth of a USDC), using whole numbers only. Then "equal" really means equal.
+</Accordion>
+
+## Parsing: `units()`
+
+```ts src/lib/payments.ts
+export function units(value: string): bigint {
+  if (!/^\d{1,12}(\.\d{1,6})?$/.test(value)) throw new Error('Enter an amount with up to 6 decimal places.');
+  const [whole, fraction = ''] = value.split('.');
+  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
+}
+```
+
+| Input | Valid | Base units |
+| --- | --- | --- |
+| `1` | ✅ | `1000000` |
+| `12.5` | ✅ | `12500000` |
+| `0.000001` | ✅ | `1` |
+| `999999999999.999999` | ✅ | max |
+| `1.0000001` | ❌ 7 decimals | — |
+| `-5` | ❌ sign | — |
+| `1e3` | ❌ exponent | — |
+| `.5` | ❌ leading digit required | — |
+| `1,000` | ❌ separators | — |
+| `0` | Parses, but rejected as not positive | — |
+
+## Normalizing: `decimal()`
+
+Stored amounts are always 6-decimal strings: `decimal(units("12.5"))` → `"12.500000"`.
+
+## Display: `tokenAmount()`
+
+UI shows grouped thousands with trailing zeros trimmed to at least two decimals: `"1250.100000"` → `1,250.10`; `"0.000001"` → `0.000001`.
+
+## Onchain encoding
+
+The checkout encodes the amount as a `uint256` in the ERC-20 calldata:
+
+```text
+0xa9059cbb                                                         ← transfer(address,uint256)
+000000000000000000000000<recipient 20 bytes>                       ← to
+<amount in base units, hex, left-padded to 32 bytes>               ← value
+```
+
+For 12.5 USDC: value = `12500000` = `0xbebc20`.
+
+<Accordion title="In plain English" icon="lightbulb">
+When your wallet sends the payment, the amount is written as a whole number of millionths. 12.5 USDC becomes 12,500,000. PayTrace builds this itself so there's no chance of a rounding error between what you see and what's sent.
+</Accordion>
+
+## CSV formulas
+
+Exported cells that begin with `=`, `+`, `-`, `@`, tab or carriage return are prefixed with `'` to prevent spreadsheet formula injection; all cells are quoted and inner quotes doubled.

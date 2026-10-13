@@ -1,0 +1,53 @@
+---
+title: "API authentication"
+description: "How API callers authenticate, and the origin and host rules every request must satisfy."
+icon: "key"
+---
+
+## Session cookie
+
+Merchant endpoints (`/api/ledger`) require the `paytrace_session` cookie issued by [`/api/wallet-session`](/api-reference/wallet-session/verify) or [`/api/session`](/api-reference/session/create). Browsers send it automatically on same-origin requests.
+
+```http
+GET /api/ledger HTTP/1.1
+Host: paytrace-tau.vercel.app
+Cookie: paytrace_session=eyJzdWIiOi….Q2x2…
+```
+
+| Situation | Response |
+| --- | --- |
+| Missing, malformed, tampered or expired cookie | `401 {"error":"Please sign in to your workspace."}` |
+| Account deleted or `version` changed (recovery) | `401 {"error":"Please sign in again."}` |
+
+<Accordion title="In plain English" icon="lightbulb">
+To use merchant endpoints you must be logged in. Your browser's login cookie proves who you are. Without it you get a "401: please sign in."
+</Accordion>
+
+## Origin and host rules (hosted mode)
+
+Applied to `/api/ledger`, `/api/track/*`, `/api/session`, `/api/wallet-session`:
+
+| Rule | Failure |
+| --- | --- |
+| `Host` header equals the configured public host | `403 Unrecognized application host.` |
+| If `Origin` is present, it equals the public origin | `403 Open this action from PayTrace.` |
+| Non-GET/HEAD requests **must** send `Origin` equal to the public origin | `403 Open this action from PayTrace.` |
+| Non-GET with `Sec-Fetch-Site: cross-site` | `403 Cross-site action blocked.` |
+
+`/api/verify` only checks that `Origin`, if present, equals the request URL's origin.
+
+## Local mode rules
+
+When `PAYTRACE_PUBLIC_ORIGIN` is unset: `Host` must be loopback (`127.0.0.1`, `localhost`, `[::1]`), `Origin` (if present) must be `http(s)://<that host>`, and any cross-site fetch is rejected (`403`). No session is required for `/api/ledger`.
+
+## Calling from scripts (hosted)
+
+```bash
+curl https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=<value from your browser>'
+```
+
+<Warning>
+Never paste your session cookie anywhere untrusted. Anyone holding it can act as you for up to 8 hours.
+</Warning>

@@ -1,0 +1,33 @@
+---
+title: "Add internal note"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: note. Append a private, timestamped note to a request."
+---
+
+Notes are append-only and never exposed on checkout. Allowed on any status.
+
+<Accordion title="In plain English" icon="lightbulb">
+Write yourself a private reminder on a request. Your customer never sees it.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"note"`.</ParamField>
+<ParamField body="id" type="string" required>Request ID.</ParamField>
+<ParamField body="text" type="string" required>1–1000 chars after trimming.</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"note","id":"PT-6c1e…","text":"Invoice #44, net-15"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 400
+{ "error": "Note must contain 1–1000 characters." }
+```
+</ResponseExample>
