@@ -16,7 +16,7 @@ def shot(k,w=1000):
 # scenes: (visual, title, [(caption, words)])
 S=[
 ('intro','Meet the builder',[
- "Hi, I'm [Your name], founder and builder of PayTrace.",
+ "Hi, I'm Emmanuel, founder and builder of PayTrace.",
  "I'm a full-stack blockchain developer with over five years of experience and a Computer Science degree.",
  "I've won multiple hackathons, worked as a senior developer at two fintech companies, and I'm an entrepreneur.",
  "I'm building PayTrace on my own, and I've shipped every layer: verification, checkout and the merchant workspace."]),
@@ -73,8 +73,13 @@ for vis,title,caps in S:
     f=F(40); lines=wrap(d,c,f,W-260); bh=len(lines)*58+40
     d.rectangle((0,H-bh-30,W,H),fill=(24,36,30))
     for k,l in enumerate(lines): d.text((W//2,H-bh-30+30+k*58),l,font=f,fill=(240,246,242),anchor='ma')
-    fn=f'f{i:02d}.png'; im.save(fn); frames.append((fn,len(c.split())*per)); i+=1
+    fn=f'f{i:02d}.png'; im.save(fn)
+    subprocess.run(['../tts/bin/python','-m','piper','-m','../voices/en_US-lessac-high.onnx','--length-scale','1.0','-f',f'v{i:02d}.wav','--','%s'%c],check=True,capture_output=True)
+    dur=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',f'v{i:02d}.wav']))+0.5
+    subprocess.run(['ffmpeg','-y','-loglevel','error','-i',f'v{i:02d}.wav','-af',f'apad=whole_dur={dur:.3f}','-ar','44100','-ac','2',f'a{i:02d}.wav'],check=True)
+    frames.append((fn,dur)); i+=1
 with open('list.txt','w') as fh:
     for fn,dur in frames: fh.write(f"file '{fn}'\nduration {dur:.2f}\n")
     fh.write(f"file '{frames[-1][0]}'\n")
+open('alist.txt','w').write(''.join(f"file 'a{k:02d}.wav'\n" for k in range(len(frames))))
 print(len(frames),sum(d for _,d in frames))
