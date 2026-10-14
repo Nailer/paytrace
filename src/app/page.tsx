@@ -3,7 +3,7 @@ import { ArrowUpRight, CheckCircle2, ShieldCheck, Wallet, FileCheck2, Link2 } fr
 
 export default function Home() {
   return <main className="marketing">
-    <nav aria-label="Main navigation"><Link className="verify-brand" href="/">paytrace.</Link><div><Link href="/guide">How it works</Link><Link href="/login">Sign in</Link><Link className="button primary" href="/start">Get started<ArrowUpRight size={16}/></Link></div></nav>
+    <nav aria-label="Main navigation"><Link className="verify-brand" href="/">paytrace.</Link><div><Link href="/guide">How it works</Link><a href="https://paytrace.mintlify.site/">Docs</a><Link href="/login">Sign in</Link><Link className="button primary" href="/start">Get started<ArrowUpRight size={16}/></Link></div></nav>
     <section className="marketing-hero clear-hero">
       <div>
         <span className="eyebrow">USDC PAYMENT TRACKING FOR FREELANCERS & BUSINESSES</span>
@@ -29,6 +29,6 @@ export default function Home() {
       <article><Wallet/><h2>Payments go straight to your wallet.</h2><p>PayTrace never holds your funds. Your customer approves the transfer in their own wallet.</p></article>
       <article><FileCheck2/><h2>Keep your records in one place.</h2><p>Track requests, add private notes, download receipts and export your payment ledger.</p></article>
     </section>
-    <footer><span>paytrace. Clarity in every transfer.</span><span>Testnet only. Test tokens have no monetary value.</span></footer>
+    <footer><span>paytrace. Clarity in every transfer.</span><a href="https://paytrace.mintlify.site/">Documentation ↗</a><span>Testnet only. Test tokens have no monetary value.</span></footer>
   </main>;
 }
