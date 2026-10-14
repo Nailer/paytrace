@@ -412,3 +412,7 @@ Next priorities are to test the workflow with freelancers and small businesses, 
 - [Security limitations](documentation/security/limitations.mdx)
 
 **PayTrace keeps the request, the payment evidence and the receipt together—so getting paid is easier to follow.**
+
+## License
+
+PayTrace is licensed under the [MIT License](LICENSE). You may use, modify and distribute the code, including commercially, provided you retain the copyright and permission notice. The software is provided without warranty. Third-party dependencies retain their own licenses.
