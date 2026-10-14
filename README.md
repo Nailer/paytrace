@@ -5,7 +5,7 @@
 
 **USDC payment requests, customer checkout and verified receipts for freelancers and businesses.**
 
-[Open PayTrace](https://paytrace-tau.vercel.app) · [Watch the demo](https://www.youtube.com/watch?v=gTR4EguxiNI) · [Watch the pitch](https://www.youtube.com/watch?v=SPiFOYZD9ZA) · [Try the verifier](https://paytrace-tau.vercel.app/verify)
+[Open PayTrace](https://paytrace-tau.vercel.app) · [Watch the demo](https://www.youtube.com/watch?v=gTR4EguxiNI) · [Watch the pitch](https://www.youtube.com/watch?v=SPiFOYZD9ZA) · [Try the verifier](https://paytrace-tau.vercel.app/verify) · [Documentation](https://paytrace.mintlify.site/)
 
 **Built on Monad testnet · Non-custodial · Guest-first onboarding**
 
@@ -31,7 +31,7 @@ You can prepare a request before signing in. Customers never need a PayTrace acc
 | Open your merchant workspace | [Sign in with your wallet](https://paytrace-tau.vercel.app/login) |
 | Inspect a transfer without signing in | [Public transaction verifier](https://paytrace-tau.vercel.app/verify) |
 | Follow the user walkthrough | [Payment playbook](https://paytrace-tau.vercel.app/guide) |
-| Explore implementation details | [Technical documentation](documentation/index.mdx) |
+| Explore implementation details | [Technical documentation](https://paytrace.mintlify.site/) |
 
 The video links open YouTube directly; they do not point to GitHub raw files.
 
@@ -404,7 +404,8 @@ Next priorities are to test the workflow with freelancers and small businesses, 
 ## Further reading
 
 - [User guide](https://paytrace-tau.vercel.app/guide)
-- [Technical documentation entry point](documentation/index.mdx)
+- [Full documentation](https://paytrace.mintlify.site/)
+- [Documentation source](documentation/index.mdx)
 - [Architecture overview](documentation/architecture/overview.mdx)
 - [API reference](documentation/api-reference/introduction.mdx)
 - [Hosting and backups](docs/DEPLOYMENT.md)
