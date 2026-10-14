@@ -1,0 +1,57 @@
+---
+title: "Verify a transfer (read-only)"
+api: "POST https://paytrace-tau.vercel.app/api/verify"
+description: "Public: run Layer-1 chain verification for any hash, recipient and amount. Changes nothing."
+---
+
+<Accordion title="In plain English" icon="lightbulb">
+A free fact-checker for Monad USDC payments. It never saves or changes anything.
+</Accordion>
+
+### Body
+
+<ParamField body="transactionHash" type="string" required>`0x` + 64 hex.</ParamField>
+<ParamField body="recipient" type="string" required>Nonzero address.</ParamField>
+<ParamField body="expectedAmount" type="string" required>Positive decimal string, ≤ 6 decimals.</ParamField>
+
+Body ≤ 4096 bytes. If an `Origin` header is sent it must match this site.
+
+### Response
+
+`200` with a [`ChainProof`](/api-reference/data-types#chainproof) for every outcome, including `amount_mismatch`, `no_transfer`, `reverted`, `not_finalized` and `unavailable`. Non-200 only for invalid input, rate limits, and provider/integrity failures.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/verify \
+  -H 'Content-Type: application/json' \
+  -d '{"transactionHash":"0x…","recipient":"0x1a2b…9f0e","expectedAmount":"1"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 verified
+{
+  "outcome": "verified",
+  "summary": "A finalized test USDC transfer matches this recipient and amount.",
+  "transactionHash": "0x…",
+  "chainId": 10143,
+  "tokenAddress": "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+  "recipient": "0x1a2b…9f0e",
+  "expectedAmount": "1",
+  "receivedAmount": "1.000000",
+  "blockNumber": 41234567,
+  "blockHash": "0x…",
+  "finalizedThrough": 41234570,
+  "checkedAt": "2026-10-02T12:00:00.000Z",
+  "transfers": [{ "evidenceId": "10143:0x…:3", "logIndex": 3, "from": "0x77aa…31cd", "to": "0x1a2b…9f0e", "amount": "1.000000", "isMint": false }]
+}
+```
+
+```json 200 unavailable
+{ "outcome": "unavailable", "summary": "No receipt is available yet. The transaction may be pending or absent from Monad testnet.", "receivedAmount": null, "transfers": [] }
+```
+
+```json 429
+{ "error": "Verification is busy. Please retry in a moment." }
+```
+</ResponseExample>

@@ -62,6 +62,10 @@ A fresh 1 test USDC transfer has now been matched to its prepared request and in
 
 Anyone can prepare a request at `/start` without signing in. Publishing asks for a wallet signature at `/login`, then returns to the draft for explicit review and publication. First sign-in creates a workspace; returning with the same wallet reopens it. Each account has an isolated workspace. Customer checkout links and the verifier remain public. The original owner workspace is preserved at `/owner` with its existing password.
 
+## Documentation
+
+Full Mintlify documentation (concepts, user guides, architecture, API reference, operations and security) lives in [`documentation/`](documentation/). Preview it with `npm i -g mint && cd documentation && mint dev`.
+
 ## Deploy and demonstrate
 
 - [Hosting and backup](docs/DEPLOYMENT.md)

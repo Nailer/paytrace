@@ -1,0 +1,26 @@
+---
+title: "Set your receiving wallet"
+description: "Save the Monad address where your workspace receives USDC by default."
+icon: "wallet"
+---
+
+New workspaces show **Start with your receiving wallet**. Click **Set up receiving wallet**, paste the public address that should receive USDC, and save.
+
+## Technical behavior
+
+- API: `POST /api/ledger {action: "settings", recipient}`.
+- Validated as `0x` + 40 hex, nonzero, then lowercased.
+- Stored with `INSERT OR REPLACE` into `settings` under key `workspace:<id>:recipient` (or `recipient` for legacy).
+- Used as the default recipient for new requests and as the recipient for [funding imports](/guides/import-funding).
+
+<Accordion title="In plain English" icon="lightbulb">
+This is just your "send money here" address. You only paste the public address, never a secret key. PayTrace remembers it so you don't have to type it on every request.
+</Accordion>
+
+## Changing it later
+
+Changing the receiving wallet **does not modify existing requests**: each request froze its recipient at creation (test: *"tracking hides names and notes; changing wallet preserves existing request"*). A funding import in progress aborts with 409 if the wallet changes mid-import.
+
+<Tip>
+Use a wallet you control and can access long-term. Double-check it character by character; funds sent to a wrong address cannot be recovered by PayTrace.
+</Tip>

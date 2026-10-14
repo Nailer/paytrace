@@ -1,0 +1,62 @@
+---
+title: "Workspaces and accounts"
+description: "Account types, how each maps to a workspace, and how data is isolated between merchants."
+icon: "users"
+---
+
+A **workspace** is the private container for one merchant's receiving wallet, requests, funding receipts, reviews and notes. Each **account** owns exactly one workspace.
+
+<Accordion title="In plain English" icon="lightbulb">
+Your workspace is your private dashboard. Nobody else can see your requests or notes. One login = one workspace.
+</Accordion>
+
+## Three ways in
+
+| Access method | Route | Credential | Workspace |
+| --- | --- | --- | --- |
+| **Wallet sign-in** (recommended) | `/login` or `/signup` | EIP-4361 signature from an EOA | Created on first sign-in; same wallet reopens it |
+| **Password account** (existing users) | `/password-login`, `/recover` | Username + password (+ recovery code) | Created at signup |
+| **Original owner** | `/owner` | Deployment password (`PAYTRACE_PASSWORD_HASH`) | The `legacy` workspace |
+
+<Note>
+New password registrations are no longer offered in the UI (`/signup` now renders wallet sign-in). Existing password accounts keep working. Wallet sign-in does **not** link to or migrate a password account.
+</Note>
+
+## Identifiers
+
+| Workspace kind | ID | Display name |
+| --- | --- | --- |
+| Legacy | `legacy` | "Original workspace" |
+| Wallet account | UUID v4 | `Workspace 0x1234…abcd` |
+| Password account | UUID v4 | Name chosen at signup (1–60 chars) |
+
+Wallet accounts are stored in `accounts` with `username = "wallet:<address>"` and `password = "disabled"`, linked through `wallet_accounts(wallet PRIMARY KEY, account_id UNIQUE)`.
+
+## Isolation guarantees
+
+- **Server-side scoping.** The workspace is derived from the signed session cookie, never from a client-supplied ID.
+- **Ownership table.** Each request and funding record has a row in `ownership(record_id, kind, workspace)`. All reads and mutations filter by it.
+- **Per-workspace settings.** The receiving wallet key is `workspace:<id>:recipient` (legacy uses `recipient`).
+- **Per-workspace claims.** See [Evidence and claims](/concepts/evidence-and-claims).
+- **Public checkout** resolves its owning workspace internally from the token.
+
+Covered by tests such as *"workspaces isolate reads and all request mutations while checkout resolves its owner"*.
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace figures out *whose* workspace to show from your secure login cookie, not from anything your browser claims. So even a technical user can't peek at or edit someone else's data by fiddling with requests.
+</Accordion>
+
+## Session versioning
+
+Each account has an integer `version`. Sessions embed it; a session whose version doesn't match the account's current version is rejected (401 *"Please sign in again."*). Password recovery increments the version, which **revokes all existing sessions** for that account.
+
+## Local mode
+
+When `PAYTRACE_PUBLIC_ORIGIN` is not set (local development), there is no authentication on the merchant API: all requests act on the `legacy` workspace, and access is restricted to loopback hosts instead.
+
+## Limits
+
+- One workspace per account; no teams, roles or invitations.
+- No email, so no email recovery.
+- Wallet sign-in supports EOAs only (no smart-contract wallets / EIP-1271, no WalletConnect).
+- Keep access to your sign-in wallet: PayTrace cannot recover wallet keys.

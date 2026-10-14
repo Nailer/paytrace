@@ -1,0 +1,49 @@
+---
+title: "Match a transaction"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: match. Verify a transaction hash against a request and record it as payment."
+---
+
+Runs [`verifyTransfer`](/architecture/verification-engine) with the request's stored recipient and amount, then [`Ledger.match`](/concepts/verification-rules) atomically. On a 422 failure, a [review item](/concepts/review-inbox) is recorded and the error is still returned.
+
+<Accordion title="In plain English" icon="lightbulb">
+"My customer says they paid. Here's the transaction. Please check it and, if it's right, mark the invoice paid."
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"match"`.</ParamField>
+<ParamField body="id" type="string" required>Request ID (`PT-…`) in your workspace.</ParamField>
+<ParamField body="transactionHash" type="string" required>`0x` + 64 hex.</ParamField>
+
+<Warning>
+There is no pending (202) response here. Submit only finalized transactions; otherwise you'll get a 422 and a review item. See [Known limitations](/security/limitations).
+</Warning>
+
+### Response
+
+`200` with the updated snapshot; the request now has `status: "received"` and `proof`.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"match","id":"PT-6c1e…","transactionHash":"0x…"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 409
+{ "error": "This transfer is already recorded. It cannot be counted twice." }
+```
+
+```json 422
+{ "error": "This transfer predates the request. Import it as historical funding instead." }
+```
+
+```json 404
+{ "error": "Payment request not found." }
+```
+</ResponseExample>

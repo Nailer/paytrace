@@ -1,0 +1,43 @@
+---
+title: "Get tracking record"
+api: "GET https://paytrace-tau.vercel.app/api/track/{token}"
+description: "Public: read a request's customer-facing fields by checkout token."
+---
+
+No session needed. Possession of the 48-hex token is the capability. Host and origin checks still apply.
+
+<Accordion title="In plain English" icon="lightbulb">
+Anyone with the payment link can read the public details of that one request, nothing more.
+</Accordion>
+
+<ParamField path="token" type="string" required>48 lowercase hex characters.</ParamField>
+
+### Response
+
+A [`TrackingRecord`](/api-reference/data-types#trackingrecord). Private fields are omitted.
+
+<RequestExample>
+```bash cURL
+curl https://paytrace-tau.vercel.app/api/track/9b0f…
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "id": "PT-6c1e…",
+  "description": "Website design, October",
+  "amount": "1.000000",
+  "recipient": "0x1a2b…9f0e",
+  "payer": "0x77aa…31cd",
+  "status": "awaiting",
+  "createdAt": "2026-10-02T11:58:00.000Z",
+  "transactionHash": null,
+  "proof": null
+}
+```
+
+```json 404
+{ "error": "Payment link not found." }
+```
+</ResponseExample>

@@ -1,0 +1,42 @@
+---
+title: "Historical funding"
+description: "Recording verified past transfers, like faucet top-ups, separately from customer payments."
+icon: "piggy-bank"
+---
+
+**Historical funding** records are verified incoming transfers that are **not** customer payments, for example the test USDC you received from Circle's faucet, or a transfer that predates any request.
+
+<Accordion title="In plain English" icon="lightbulb">
+Not every coin that arrives in your wallet is an invoice payment. Maybe you topped up from a faucet, or moved money between your own wallets. Funding receipts let you keep proof of those too, in a separate list, so they never inflate your "received from customers" total.
+</Accordion>
+
+## How import works
+
+`POST /api/ledger` with `{action: "import", transactionHash, amount, label}`:
+
+1. Runs `verifyTransfer` against the workspace's **current receiving wallet** and the given amount.
+2. In a write transaction: re-reads the receiving wallet; if it changed since verification, aborts with 409 *"The receiving wallet changed. Verify the transfer again."*
+3. Validates `label` (1–120 chars).
+4. Claims the evidence (same `claims` table and rules as payments, except no payer or `afterBlock` checks).
+5. Inserts into `funding` and `ownership`.
+
+## Differences from a request payment
+
+| | Request payment | Historical funding |
+| --- | --- | --- |
+| Needs `verified` outcome | Yes | Yes |
+| Must be after request creation | Yes | No |
+| Must come from expected payer | Yes | No (any sender) |
+| Mints allowed | **No** | Yes (labelled as mint evidence) |
+| Counted in "Received for requests" | Yes | No |
+| Shares the evidence claim space | Yes | Yes |
+
+<Note>
+The summary for a mint says: *"A finalized test USDC mint matches this recipient and amount. It is faucet/mint evidence, not a payment from a customer."*
+</Note>
+
+## Real example
+
+During development, a real user-provided **20 test USDC** transfer was verified against the live Monad testnet RPC and saved as historical funding. In the hosted release, an earlier real 1 USDC transfer was likewise saved as historical funding and was correctly **rejected** (422) when submitted against a newly created request.
+
+See the guide: [Import a funding receipt](/guides/import-funding).

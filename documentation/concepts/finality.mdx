@@ -1,0 +1,54 @@
+---
+title: "Finality and canonical blocks"
+description: "Why PayTrace waits for the finalized tag and re-checks block hashes before accepting evidence."
+icon: "lock"
+---
+
+## Inclusion is not finality
+
+When a transaction is first **included** in a block, the block may still be subject to reorganization: consensus could converge on a different block at the same height, dropping or reordering the transaction. A block is **finalized** once the protocol guarantees it will not be reverted. Ethereum-style JSON-RPC exposes this via the `"finalized"` block tag in `eth_getBlockByNumber`.
+
+<Accordion title="In plain English" icon="lightbulb">
+When your payment first appears, it's like a sticky note on the notebook page: probably staying, but technically removable. "Finalized" means it's been glued in. PayTrace waits for the glue.
+</Accordion>
+
+## How PayTrace checks it
+
+```ts src/lib/chain-verification.ts (simplified)
+const receipt   = await rpc('eth_getTransactionReceipt', [hash]);
+const [finalized, canonical] = await Promise.all([
+  rpc('eth_getBlockByNumber', ['finalized', false]),
+  rpc('eth_getBlockByNumber', [receipt.blockNumber, false]),
+]);
+// canonical: block at receipt height must have the same hash
+if (canonical.hash !== receipt.blockHash) throw /* "no longer matches the canonical block" */;
+// finality: receipt block must be <= finalized head
+if (receipt.blockNumber > finalized.number) return { outcome: 'not_finalized' };
+```
+
+Two independent checks:
+
+| Check | Protects against |
+| --- | --- |
+| **Canonical** (`block(receipt.blockNumber).hash == receipt.blockHash`) | A stale or forked receipt from a node with an inconsistent view |
+| **Finalized** (`receipt.blockNumber <= finalized.number`) | Accepting a transfer that could still be reorganized away |
+
+If the provider can't supply finalized-block evidence at all, verification **throws** ("No payment was marked verified") rather than assuming finality.
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace asks two questions: "Is the page this payment is on the official page?" and "Has that page been glued in yet?" If the blockchain service can't answer the second question, PayTrace refuses to guess.
+</Accordion>
+
+## What it means for timing
+
+Monad finalizes quickly, typically seconds. The checkout polls every **8 seconds** for up to **30 attempts (4 minutes)**. If finality isn't reached in that window, the checkout stops polling and keeps the hash so the payer can press verify again. Nothing is lost.
+
+## Trust assumption
+
+<Warning>
+PayTrace is **not** an independently validating consensus client. It trusts the configured RPC provider (`https://testnet-rpc.monad.xyz`) to report receipts and the finalized head honestly. A compromised or malicious provider could report false evidence. See [Threat model](/security/threat-model).
+</Warning>
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace reads the blockchain through a public service run by Monad. It trusts that service to tell the truth. That's normal for most apps, but it's worth knowing.
+</Accordion>

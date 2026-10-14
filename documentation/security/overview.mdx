@@ -1,0 +1,75 @@
+---
+title: "Security overview"
+description: "The security architecture of PayTrace, control by control."
+icon: "shield-check"
+---
+
+<Warning>
+PayTrace is an initial testnet release. It has **not** undergone an independent security audit. This page describes implemented controls, not guarantees.
+</Warning>
+
+## Core properties
+
+| Property | How it's achieved |
+| --- | --- |
+| **Noncustodial** | No private keys stored; no contracts; no allowances. Payer signs a direct ERC-20 `transfer` |
+| **Server-authoritative state** | Clients submit only hashes; the server derives every fact from RPC and stored request data |
+| **Fail-closed verification** | Integrity anomalies throw; no status change on any error |
+| **Exactly-once evidence** | PK-constrained `claims` table written in the same transaction as the state change |
+| **Tenant isolation** | Session-derived workspace; ownership table; scoped claims |
+| **Data minimization on public surfaces** | Checkout projection omits customer and notes |
+| **Replay resistance** | `afterBlock` for payments; single-use, expiring, browser-bound SIWE nonces |
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace never holds money or keys, always checks the blockchain itself, refuses to guess when something's off, never counts a payment twice, keeps each merchant's data separate, and shows payers only what they need.
+</Accordion>
+
+## Controls by layer
+
+<AccordionGroup>
+  <Accordion title="Transport and browser" icon="globe">
+    - HTTPS origin enforced in hosted mode; `Secure` cookies.
+    - `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` (clickjacking).
+    - `X-Content-Type-Options: nosniff`.
+    - `Referrer-Policy: no-referrer` (protects checkout tokens in URLs).
+    - `Permissions-Policy` disables camera, microphone, geolocation.
+    - `X-Powered-By` removed.
+    - Checkout pages `noindex, nofollow`.
+  </Accordion>
+  <Accordion title="Request handling" icon="filter">
+    - JSON-only bodies (415 otherwise), streamed with hard byte caps (8 KiB / 4 KiB) and early cancel (413).
+    - Strict regex validation of hashes, addresses, amounts, usernames, tokens.
+    - Exact `Host` and `Origin` checks; `Sec-Fetch-Site: cross-site` rejected for writes (CSRF defense in depth on top of `SameSite=Strict`).
+    - `Cache-Control: no-store` on all API responses.
+    - Generic messages for unexpected errors (no stack traces).
+  </Accordion>
+  <Accordion title="Authentication" icon="key-round">
+    - HMAC-SHA256 sessions with constant-time comparison, 8 h max lifetime, bounded token length.
+    - SIWE: domain/URI/chain binding, 5-min expiry, browser binding via HttpOnly cookie hash, atomic single-use consumption.
+    - scrypt password hashing with per-user salt; dummy hash on unknown users (timing-uniform).
+    - Recovery codes: 256-bit, stored as SHA-256, rotated on use, version bump revokes sessions.
+    - Persistent, HMAC-keyed login rate limits.
+  </Accordion>
+  <Accordion title="Data layer" icon="database">
+    - Parameterized queries for all user-supplied values.
+    - The only interpolated SQL value (workspace ID) is validated against `legacy` or a UUID pattern first.
+    - Write transactions with rollback for all multi-step mutations.
+    - Unique constraints on tokens, claims, reviews, usernames and wallets.
+  </Accordion>
+  <Accordion title="Chain access" icon="link">
+    - Fixed server-side RPC URL (no SSRF via user-controlled endpoints).
+    - Chain ID verified before any receipt read.
+    - Contract allowlist; `Transfer` topic, topic count and data length validated.
+    - Canonical-block and finalized-block checks.
+    - 12 s timeouts; provider errors never imply success.
+  </Accordion>
+  <Accordion title="Secrets and operations" icon="lock">
+    - All `.env*` files git-ignored (except the example).
+    - Credentials generated with CSPRNG, written `0600`, never overwritten.
+    - Startup refuses invalid configuration; Vercel refuses missing DB/origin.
+    - DB URL never logged (only a hash fingerprint).
+    - Backups written `0600`.
+    - Container runs as non-root.
+    - CI has read-only repository permissions.
+  </Accordion>
+</AccordionGroup>

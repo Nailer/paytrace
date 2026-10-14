@@ -1,0 +1,72 @@
+---
+title: "Frontend"
+description: "Routes, components, rendering modes, design system and accessibility."
+icon: "layout-template"
+---
+
+## Routes and rendering
+
+| Route | File | Rendering | Component |
+| --- | --- | --- | --- |
+| `/` | `app/page.tsx` | Server (static) | Landing |
+| `/start` | `app/start/page.tsx` | Client | `RequestStarter` |
+| `/login`, `/signup` | `app/login`, `app/signup` | Client | `WalletLogin` |
+| `/password-login` | `app/password-login` | Client | `AccountForm mode="signin"` |
+| `/recover` | `app/recover` | Client | `AccountForm mode="recover"` |
+| `/owner` | `app/owner` | Client | `AccountForm mode="owner"` |
+| `/workspace` | `app/workspace` | **Dynamic** server → client | `LiveWorkspace isHosted={hosted()}` |
+| `/track/[token]` | `app/track/[token]` | **Dynamic** server (Node), `noindex`, `no-referrer` | `Checkout` |
+| `/verify` | `app/verify` | Server shell + client form | `VerifyWorkspace` |
+| `/guide` | `app/guide` | Server | Guide |
+| `/demo` | `app/demo` | Client | `Workspace` (simulated) |
+
+## Components
+
+| Component | Size | Responsibilities |
+| --- | --- | --- |
+| `live-workspace.tsx` | ~19 KB | Sidebar views (requests/funding/reviews), summary tiles, search, details panel, forms (wallet, create, import), notes, cancel, match, CSV/evidence export, 15 s refresh |
+| `checkout.tsx` | ~9 KB | Payment card, wallet pay, manual hash, polling, receipt download/print |
+| `verify-workspace.tsx` | ~7 KB | Verifier form and evidence panel |
+| `request-starter.tsx` | ~5 KB | Guest draft, review, publish |
+| `wallet-login.tsx` | ~4 KB | SIWE flow and resume-to-draft |
+| `account-form.tsx` | ~5 KB | Password sign-in, recovery, owner; recovery-code display/download |
+| `workspace.tsx` | ~36 KB | Sprint-1 simulated prototype (`/demo` only) |
+
+## Design system
+
+Defined entirely in `src/app/globals.css`.
+
+| Token | Value |
+| --- | --- |
+| Surfaces | Warm ivory |
+| Navigation | Ink / deep forest `#19342e` |
+| Actions | Teal `#237a62` |
+| Body font | DM Sans 400/500/600/700 (self-hosted via Fontsource) |
+| Heading font | Manrope 500/600/700 |
+| Icons | lucide-react |
+
+Status is always conveyed with **text and icon**, not color alone. Desktop uses a sidebar; mobile uses compact navigation; tables collapse to records; details open as a side sheet (full-screen on mobile). Layouts were inspected at 390 px with document width equal to viewport width.
+
+<Accordion title="In plain English" icon="lightbulb">
+The look is calm and "bank-like": cream backgrounds, dark green, teal buttons. Statuses always have words and icons, so people who can't distinguish colors still understand them. It works on phones as well as desktops.
+</Accordion>
+
+## Accessibility
+
+- Visible focus states, keyboard-operable controls.
+- `role="alert"` for errors, `role="status"` for progress.
+- `aria-label`s on icon-only buttons (dismiss, refresh, close).
+- Reduced-motion support was a stated design requirement.
+
+## Security headers (all routes)
+
+From `next.config.ts`:
+
+| Header | Value |
+| --- | --- |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `no-referrer` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+| `Content-Security-Policy` | `frame-ancestors 'none'; object-src 'none'; base-uri 'self'` |
+| `X-Powered-By` | removed (`poweredByHeader: false`) |

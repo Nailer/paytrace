@@ -1,0 +1,56 @@
+---
+title: "Deploy to Vercel + Turso"
+description: "The production deployment path: Vercel serverless with a remote Turso (libSQL) database."
+icon: "cloud"
+---
+
+This is how the live release at `paytrace-tau.vercel.app` runs.
+
+<Warning>
+Never store the ledger on Vercel's filesystem: it is ephemeral and per-instance. PayTrace enforces this: on Vercel, missing Turso credentials or public origin cause a **503**, never a temporary local database.
+</Warning>
+
+<Accordion title="In plain English" icon="lightbulb">
+Vercel runs the website; Turso stores the data in the cloud. Vercel's own disk gets wiped regularly, so PayTrace refuses to save anything there.
+</Accordion>
+
+<Steps>
+  <Step title="Link the project">
+    Import `Nailer/paytrace` into Vercel (or `vercel link` from the repo). Framework preset: Next.js. Node.js version: **24**.
+  </Step>
+  <Step title="Add Turso">
+    Add the **Turso Cloud** integration from the Vercel Marketplace (Starter plan) and connect it to **Production**. The account owner must accept the marketplace terms. For production, create a **dedicated** database resource with the env prefix `PAYTRACE_PROD_`, which supplies:
+    - `PAYTRACE_PROD_TURSO_DATABASE_URL`
+    - `PAYTRACE_PROD_TURSO_AUTH_TOKEN`
+
+    These take precedence over generic `TURSO_*` values. Keep development and preview databases separate.
+  </Step>
+  <Step title="Generate credentials">
+    ```bash
+    node scripts/setup-hosting.mjs https://your-project.vercel.app
+    ```
+    Copy `PAYTRACE_PUBLIC_ORIGIN`, `PAYTRACE_PASSWORD_HASH` and `PAYTRACE_SESSION_SECRET` from `.env.hosting` into Vercel → Project → Settings → Environment Variables (Production). Ignore `PAYTRACE_DB_PATH` on Vercel.
+  </Step>
+  <Step title="Deploy">
+    Deploy from `main`. A successful build alone does **not** prove a working deployment.
+  </Step>
+  <Step title="Run acceptance checks">
+    Complete the [release checklist](/operate/release-checklist).
+  </Step>
+</Steps>
+
+## Why a dedicated production database
+
+During the first deployment, the generic integration produced **changing database identities** between deployments. Switching to a production-only resource fixed it; afterward, wallet settings, request records, the historical receipt and an exact checkout token survived a full redeploy. The startup log prints a 12-char SHA-256 fingerprint of the DB URL so you can confirm the identity stays constant without exposing the URL.
+
+## Preview deployments
+
+Preview environments must use **separate** database credentials and their **own** `PAYTRACE_PUBLIC_ORIGIN` before any write testing. Otherwise the origin check rejects writes (good), or worse, previews write into production data.
+
+## Migrating local data
+
+Local records are **not** uploaded automatically. Either create fresh hosted requests, or migrate a verified backup through a private procedure. Never commit or upload the SQLite file as a deployment asset.
+
+## Rate limiting on Vercel
+
+Sign-in budgets are keyed by an HMAC of Vercel's trusted `x-forwarded-for` client IP and stored in Turso. Verification and ledger budgets are per serverless instance; add Vercel Firewall rules for broader exposure.

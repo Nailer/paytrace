@@ -1,0 +1,70 @@
+---
+title: "Receipts and exports"
+description: "Customer receipts, JSON evidence files and the CSV ledger export, with exact formats."
+icon: "file-down"
+---
+
+## Customer receipt (checkout)
+
+When a request is **received**, the checkout offers:
+
+- **Download receipt** → `PT-<uuid>-receipt.json`
+- **Print receipt** → browser print dialog (`window.print()`)
+- **View the onchain receipt ↗** → `https://testnet.monadscan.com/tx/<hash>`
+
+```json PT-…-receipt.json
+{
+  "request": "PT-2f1c…",
+  "description": "Website design, October",
+  "amount": "1.000000",
+  "network": "Monad Testnet",
+  "proof": {
+    "outcome": "verified",
+    "summary": "A finalized test USDC transfer matches this recipient and amount.",
+    "transactionHash": "0x…",
+    "chainId": 10143,
+    "tokenAddress": "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+    "recipient": "0x…",
+    "expectedAmount": "1.000000",
+    "receivedAmount": "1.000000",
+    "blockNumber": 41234567,
+    "blockHash": "0x…",
+    "finalizedThrough": 41234570,
+    "checkedAt": "2026-10-02T12:00:00.000Z",
+    "transfers": [
+      { "evidenceId": "10143:0x…:3", "logIndex": 3, "from": "0x…", "to": "0x…", "amount": "1.000000", "isMint": false }
+    ]
+  }
+}
+```
+
+<Accordion title="In plain English" icon="lightbulb">
+The receipt file contains everything needed to prove the payment independently: which network, which coin, which wallets, how much, and exactly where on the blockchain it's recorded. Anyone can check it against a block explorer. The field meanings are documented in [Data types](/api-reference/data-types).
+</Accordion>
+
+## Merchant evidence (workspace)
+
+In a received request's details, **Download evidence** saves the same `ChainProof` JSON for your records.
+
+## CSV ledger export
+
+**Export CSV** downloads all requests in the workspace.
+
+| Column | Source |
+| --- | --- |
+| Request | `id` |
+| Customer | `customer` |
+| Description | `description` |
+| USDC requested | `amount` (6 decimals) |
+| Status | `awaiting` / `received` / `cancelled` |
+| Recipient | `recipient` |
+| Payer | `payer` |
+| Created | `createdAt` (ISO 8601) |
+| Transaction | `proof.transactionHash` or empty |
+| Network | `Monad Testnet` |
+
+Format: CRLF line endings, every cell double-quoted, inner quotes doubled, and cells starting with `= + - @ \t \r` prefixed with `'` to block spreadsheet formula injection.
+
+<Note>
+The CSV includes **private** customer names. Treat exported files as confidential.
+</Note>

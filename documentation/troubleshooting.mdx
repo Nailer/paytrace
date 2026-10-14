@@ -1,0 +1,110 @@
+---
+title: "Troubleshooting"
+description: "Every user-facing error message, what causes it, and how to fix it."
+icon: "life-buoy"
+---
+
+Use your browser's find (Ctrl/Cmd + F) to search for the exact message you saw.
+
+## Wallet and checkout
+
+<AccordionGroup>
+  <Accordion title="Open this page in a browser with an Ethereum-compatible wallet extension…">
+    **Cause:** no `window.ethereum` provider. Common in in-app previews, private windows without extensions, or mobile browsers.
+    **Fix:** open the link in Chrome/Firefox/Brave with a wallet extension, or inside your mobile wallet's browser. Or pay manually and use **Already sent it?**
+  </Accordion>
+  <Accordion title="Select the expected payer account 0x… in your wallet, then try again.">
+    **Cause:** your wallet's active account isn't the payer the merchant specified.
+    **Fix:** switch accounts in your wallet. If you don't control that address, ask the merchant to issue a new request with your address.
+  </Accordion>
+  <Accordion title="Switch your wallet to Monad Testnet before paying.">
+    **Cause:** the network switch was declined or didn't apply.
+    **Fix:** approve the switch, or add Monad Testnet manually ([settings](/guides/get-test-tokens#2-add-monad-testnet)).
+  </Accordion>
+  <Accordion title="You declined the wallet request. No payment was recorded.">
+    **Cause:** you rejected a wallet prompt (error 4001). Nothing was sent. Click pay again when ready.
+  </Accordion>
+  <Accordion title="The wallet could not submit the transfer. Check your USDC and MON gas balance.">
+    **Cause:** usually gas estimation failed: not enough test USDC, or no MON for gas.
+    **Fix:** top up from faucets ([Get test tokens](/guides/get-test-tokens)).
+  </Accordion>
+  <Accordion title="The wallet did not return a transaction hash. Check its activity before trying another payment.">
+    **Cause:** the wallet returned something unexpected.
+    **Fix:** check wallet activity. If a transfer was sent, paste its hash into **Already sent it?** Do **not** pay twice.
+  </Accordion>
+  <Accordion title="Still waiting. Your transaction hash is saved; you can check it again below.">
+    **Cause:** 4 minutes passed without a finalized receipt (RPC delay or congestion).
+    **Fix:** click **Verify existing transfer**. Your hash is preserved.
+  </Accordion>
+  <Accordion title="This request is closed.">
+    **Cause:** the merchant cancelled it. **Do not send funds.**
+  </Accordion>
+</AccordionGroup>
+
+## Verification results
+
+<AccordionGroup>
+  <Accordion title="The recipient matches, but the transferred amount differs from the requested amount.">
+    Under/overpayment. Amounts must match to 6 decimals. Contact the merchant; PayTrace can't refund.
+  </Accordion>
+  <Accordion title="The transfer must come from this request's expected payer wallet.">
+    Sent from a different wallet, a mint, or (for merchant matches) the transfer was not finalized yet or the transaction had zero or multiple matching events.
+  </Accordion>
+  <Accordion title="This transfer predates the request. Import it as historical funding instead.">
+    The transfer was in or before the block when the request was created, or (merchant match) no receipt exists yet. Request a fresh payment, or import the old one as funding.
+  </Accordion>
+  <Accordion title="This transfer is already recorded. It cannot be counted twice.">
+    The event was already claimed by another request or funding record in this workspace.
+  </Accordion>
+  <Accordion title="No positive transfer from the supported USDC contract to this recipient was found.">
+    Wrong token (not Circle test USDC), wrong recipient, or zero-value transfer.
+  </Accordion>
+  <Accordion title="This transaction reverted. It cannot be counted as a received payment.">
+    The transaction failed onchain. No funds moved.
+  </Accordion>
+  <Accordion title="Multiple incoming USDC events need manual review.">
+    More than one transfer to the recipient in one transaction. PayTrace never sums them.
+  </Accordion>
+  <Accordion title="The receipt no longer matches the canonical block. Check again.">
+    Transient provider inconsistency or reorg. Retry shortly.
+  </Accordion>
+  <Accordion title="The public RPC is rate limited. Please retry in a moment.">
+    The Monad public RPC returned HTTP 429. Wait and retry.
+  </Accordion>
+  <Accordion title="The Monad testnet provider did not respond. Nothing was marked verified. Please retry.">
+    Network error or 12-second RPC timeout.
+  </Accordion>
+  <Accordion title="The provider could not supply finalized-block evidence. No payment was marked verified.">
+    RPC didn't return the `finalized` block. Retry later.
+  </Accordion>
+</AccordionGroup>
+
+## Account and workspace
+
+<AccordionGroup>
+  <Accordion title="Please sign in to your workspace. / Please sign in again.">
+    Session missing, expired (8 h), tampered, or revoked by recovery. Sign in again.
+  </Accordion>
+  <Accordion title="Too many sign-in attempts. Try again in 15 minutes.">
+    Five attempts per 15 minutes per action per client. People behind the same network share the budget.
+  </Accordion>
+  <Accordion title="Save your receiving wallet first.">
+    Set it in the workspace before creating requests.
+  </Accordion>
+  <Accordion title="The ledger is busy. Please retry shortly. / Verification is busy.">
+    Per-instance concurrency limit reached. Retry in a few seconds.
+  </Accordion>
+  <Accordion title="Open this action from PayTrace. / Cross-site action blocked. / Unrecognized application host.">
+    Origin or host checks failed: the request came from another site, a different hostname, or a tool without the right `Origin` header.
+  </Accordion>
+  <Accordion title="This workspace is local-only. Hosted access requires authentication before deployment.">
+    You reached a local-mode server via a non-loopback hostname. Use `127.0.0.1:3100`, or configure hosting.
+  </Accordion>
+  <Accordion title="Hosted database is not configured. / Public origin is not configured. / Workspace authentication is not configured.">
+    Operator misconfiguration (503). See [Configuration](/operate/configuration).
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Open an issue on [GitHub](https://github.com/Nailer/paytrace/issues) with the message, the time, and (if relevant) the transaction hash. Never include private keys, seed phrases, passwords or recovery codes.

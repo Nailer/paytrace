@@ -1,0 +1,24 @@
+---
+title: "Sign out"
+api: "DELETE https://paytrace-tau.vercel.app/api/session"
+description: "Clear the session cookie in this browser."
+---
+
+Returns `200 {"ok": true}` with `Set-Cookie: paytrace_session=; …; Max-Age=0`. Subject to host/origin checks (403 `Request rejected.` on failure).
+
+<Note>
+Sessions are stateless. Clearing the cookie signs out this browser only; a copied token stays valid until it expires (8 h), the account version changes, or the secret is rotated.
+</Note>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE https://paytrace-tau.vercel.app/api/session \
+  -H 'Origin: https://paytrace-tau.vercel.app'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{ "ok": true }
+```
+</ResponseExample>

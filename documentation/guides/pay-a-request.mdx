@@ -1,0 +1,67 @@
+---
+title: "Pay a request"
+description: "Detailed walkthrough of the checkout payment flow, each wallet prompt, and what can go wrong."
+icon: "credit-card"
+---
+
+<Info>For the short version, see the [Payer quickstart](/get-started/quickstart-payer).</Info>
+
+## Checkout page anatomy
+
+| Section | Content |
+| --- | --- |
+| Header | `paytrace.` brand, **Monad testnet** live dot, **Onchain verification** badge |
+| Payment card | Status pill, description, amount in test USDC, request reference, created date, **Pay with your wallet** |
+| Recipient block | Receiving wallet (click to copy), expected payer |
+| Your payment journey | 1 Request created → 2 Send from your wallet → 3 We verify the evidence |
+| Already sent it? | Paste a transaction hash; **Manual payment details** (network, chain, token contract) |
+| Footer | "Testnet tokens have no monetary value. Onchain receipt is not bank settlement." |
+
+## The wallet sequence, step by step
+
+| # | Wallet RPC call | What you see | If it fails |
+| --- | --- | --- | --- |
+| 1 | `eth_requestAccounts` | Connect / choose account | Account ≠ expected payer → *"Select the expected payer account …"*; nothing sent |
+| 2 | `eth_chainId` | — | — |
+| 3 | `wallet_switchEthereumChain` (`0x279f`) | Switch network prompt | Rejected → error; nothing sent |
+| 3b | `wallet_addEthereumChain` (only on error 4902) | Add Monad Testnet prompt | Rejected → error |
+| 4 | `eth_chainId` (re-check) | — | Still wrong → *"Switch your wallet to Monad Testnet before paying."* |
+| 5 | `eth_accounts` (re-check) | — | Account changed → *"Your wallet account changed…"* |
+| 6 | `eth_estimateGas` | — | Insufficient USDC/MON or revert → error before signing |
+| 7 | `eth_sendTransaction` | **Confirm transaction** | Rejected (4001) → *"You declined the wallet request. No payment was recorded."* |
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace checks everything *before* asking you to confirm: right account, right network, enough funds. Only then does your wallet show the final "Confirm" screen. If any check fails, nothing is sent.
+</Accordion>
+
+## The transaction you approve
+
+```json
+{
+  "from": "<expected payer>",
+  "to": "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+  "value": "0x0",
+  "chainId": "0x279f",
+  "data": "0xa9059cbb<recipient padded to 32 bytes><amount padded to 32 bytes>"
+}
+```
+
+- `to` is the **USDC contract**, not the merchant. That's normal for token transfers: you're asking the USDC contract to move your tokens to the merchant.
+- `value` is `0`: no MON is sent, only gas is spent.
+- There is no `approve`. PayTrace never asks for spending permission.
+
+<Accordion title="In plain English" icon="lightbulb">
+Your wallet may show the "to" address as the USDC contract instead of the merchant. That's expected: you're telling the USDC program "move 10 of my USDC to this merchant." Many wallets decode it and show the merchant as the recipient.
+</Accordion>
+
+## After you confirm
+
+1. The hash is saved to `localStorage['paytrace-submission-<token>']`.
+2. The page immediately calls verification, then polls every 8 s, up to 30 attempts.
+3. While pending: **Confirming onchain…**
+4. On success: **Payment received** and the receipt actions appear. The saved hash is cleared.
+5. After 4 minutes without a result: *"Still waiting. Your transaction hash is saved; you can check it again below."*
+
+<Warning>
+If you see an error **after** your wallet returned a hash, **do not pay again**. Use **Verify existing transfer** with the saved hash. The pay button is disabled once a hash is stored for exactly this reason.
+</Warning>

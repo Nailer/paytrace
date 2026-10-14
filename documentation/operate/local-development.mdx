@@ -1,0 +1,58 @@
+---
+title: "Local development"
+description: "Day-to-day workflow, local mode behavior, database location and useful commands."
+icon: "laptop"
+---
+
+## Start
+
+```bash
+nvm use        # Node 24 from .nvmrc
+npm ci
+npm run dev    # http://127.0.0.1:3100
+```
+
+## Local mode
+
+Without `PAYTRACE_PUBLIC_ORIGIN`:
+
+| Aspect | Behavior |
+| --- | --- |
+| Binding | `127.0.0.1:3100` only (dev and start) |
+| Merchant API auth | None. Host must be loopback; cross-site blocked |
+| Workspace | Always `legacy` (even if you sign in with a wallet) |
+| Database | `.data/paytrace.sqlite` (override with `PAYTRACE_DB_PATH`) |
+| Wallet / password sign-in | Requires `PAYTRACE_SESSION_SECRET` (≥ 32 chars) in `.env.local` |
+| Checkout links | Only usable on this machine |
+
+<Accordion title="In plain English" icon="lightbulb">
+On your laptop PayTrace runs in a simple "only me" mode. It can't be reached from other devices, so it doesn't need passwords. Everything is saved to a file in the `.data` folder.
+</Accordion>
+
+<Warning>
+Never expose a local-mode instance through a tunnel or reverse proxy (ngrok, Cloudflare Tunnel, etc.). Doing so would change the `Host` header and either break it or, if spoofed, bypass the loopback check. Configure [hosted mode](/operate/configuration) instead.
+</Warning>
+
+## Reset local data
+
+Stop the server, then move `.data/` aside (don't delete it if it contains evidence you care about):
+
+```bash
+mv .data .data-backup-$(date +%Y%m%d)
+```
+
+## Inspect the database
+
+```bash
+sqlite3 .data/paytrace.sqlite "SELECT id, json_extract(data,'$.status') FROM requests;"
+```
+
+## Live smoke test (read-only)
+
+```bash
+npx tsx scripts/smoke-verify.ts
+```
+
+## Agent note
+
+`AGENTS.md` warns that **Next.js 16.3.8 has breaking changes** relative to older versions. Read `node_modules/next/dist/docs/` before changing framework-level code. `next dev` re-adds this block automatically.

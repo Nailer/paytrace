@@ -1,0 +1,73 @@
+---
+title: "Frequently asked questions"
+description: "Quick answers for merchants, payers, developers and reviewers."
+icon: "message-circle-question"
+---
+
+## General
+
+<AccordionGroup>
+  <Accordion title="Is this real money?">
+    No. PayTrace runs on Monad **Testnet** with Circle **test** USDC. Test tokens have no monetary value.
+  </Accordion>
+  <Accordion title="Does PayTrace hold my funds?">
+    Never. Payments go directly from the payer's wallet to the merchant's wallet. PayTrace has no keys, no contract and no token approvals.
+  </Accordion>
+  <Accordion title="Does it cost anything?">
+    PayTrace charges nothing. The payer pays a small network fee in test MON.
+  </Accordion>
+  <Accordion title="Which wallets work?">
+    Injected EIP-1193 wallets controlling standard EOAs: browser extensions or mobile wallet browsers. Smart-contract wallets and WalletConnect aren't supported yet.
+  </Accordion>
+  <Accordion title="Which chains and tokens?">
+    Only Monad Testnet (10143) and Circle test USDC `0x534b2f3A21130d7a60830c2Df862319e593943A3`.
+  </Accordion>
+</AccordionGroup>
+
+## Merchants
+
+<AccordionGroup>
+  <Accordion title="Why must I know the payer's wallet in advance?">
+    So that only that specific payer can satisfy the request. See [Why an expected payer is mandatory](/concepts/payment-requests#why-an-expected-payer-is-mandatory).
+  </Accordion>
+  <Accordion title="Can I edit a request?">
+    No. Amount, wallets and description are immutable. Cancel and create a new one.
+  </Accordion>
+  <Accordion title="Can I refund through PayTrace?">
+    No. Refunds must be sent from your own wallet. PayTrace won't track them.
+  </Accordion>
+  <Accordion title="The customer paid twice. What happens?">
+    The first valid transfer marks the request received. Any later transfer is not attached (the request is no longer awaiting). Refund the extra yourself.
+  </Accordion>
+  <Accordion title="The customer paid in two parts.">
+    Not supported. Each request needs one exact transfer. Two separate transactions won't combine, and two events in one transaction go to review.
+  </Accordion>
+  <Accordion title="Do I get notified when I'm paid?">
+    The workspace auto-refreshes every 15 seconds. There are no emails or push notifications.
+  </Accordion>
+  <Accordion title="Can my team share a workspace?">
+    Not yet. One account, one workspace.
+  </Accordion>
+  <Accordion title="What happens if a customer pays after I cancel?">
+    Funds still arrive in your wallet (cancellation can't stop that), but the request stays cancelled. You may import it as funding.
+  </Accordion>
+</AccordionGroup>
+
+## Payers
+
+<AccordionGroup>
+  <Accordion title="Do I need an account?">No. Just the link and a wallet.</Accordion>
+  <Accordion title="I closed the tab mid-payment.">Reopen the same link; the hash is saved in your browser. Or paste it under **Already sent it?**</Accordion>
+  <Accordion title="Can the merchant see my other activity?">Everything onchain is public anyway. PayTrace only stores what's needed for this request.</Accordion>
+</AccordionGroup>
+
+## Developers and reviewers
+
+<AccordionGroup>
+  <Accordion title="Is there a smart contract?">No. Verification reads standard ERC-20 `Transfer` logs via JSON-RPC.</Accordion>
+  <Accordion title="Is there a background indexer?">No. Verification is on demand: while checkout is open, or when the merchant matches a hash.</Accordion>
+  <Accordion title="Is it audited?">No. It's a testnet MVP with 46 automated tests. Not an audited production payments service.</Accordion>
+  <Accordion title="Why Node 24?">The tests and backup script use `node:sqlite`.</Accordion>
+  <Accordion title="What is /demo?">An archived, clearly simulated design prototype from Sprint 1. It's not the product flow. See [Demo prototype](/architecture/demo-prototype).</Accordion>
+  <Accordion title="Does it use Monad's throughput?">PayTrace runs on Monad, but no performance advantage has been benchmarked or claimed.</Accordion>
+</AccordionGroup>

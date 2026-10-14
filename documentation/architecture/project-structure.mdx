@@ -1,0 +1,84 @@
+---
+title: "Project structure"
+description: "A file-by-file map of the repository."
+icon: "folder-tree"
+---
+
+```text
+paytrace/
+├── .github/workflows/checks.yml   CI: npm ci → test → build → typecheck
+├── .nvmrc                         Node 24
+├── .env.example                   Documented environment variables (no secrets)
+├── Dockerfile                     Two-stage Node 24 image, runs scripts/start-hosted.mjs
+├── next.config.ts                 Security headers, no X-Powered-By
+├── package.json                   Scripts and dependencies
+├── tsconfig.json                  Strict TS, "@/*" → "./src/*"
+├── AGENTS.md / CLAUDE.md          Agent instructions (Next.js version notice)
+├── README.md
+├── documentation/                 This Mintlify documentation site
+├── docs/                          Internal engineering notes (sprints, release, deployment, judge review)
+├── public/brand/                  Logo PNG + generation notes
+├── scripts/
+│   ├── backup.mjs                 Consistent online SQLite backup (node:sqlite)
+│   ├── setup-hosting.mjs          Generates .env.hosting + .env.hosting-password
+│   ├── smoke-verify.ts            Live read-only verification smoke test
+│   └── start-hosted.mjs           Validates env, then `next start` on 0.0.0.0
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx             Root layout, fonts, metadata
+│   │   ├── page.tsx               Landing page
+│   │   ├── globals.css            Entire design system (~78 KB)
+│   │   ├── start/                 Guest request draft
+│   │   ├── login/, signup/        Wallet sign-in (same component)
+│   │   ├── password-login/, recover/, owner/   Legacy account access
+│   │   ├── workspace/             Merchant workspace
+│   │   ├── track/[token]/         Public checkout (server-rendered, noindex)
+│   │   ├── verify/                Public read-only verifier
+│   │   ├── guide/                 In-app user guide
+│   │   ├── demo/                  Archived simulated prototype
+│   │   └── api/
+│   │       ├── ledger/route.ts            GET snapshot · POST actions
+│   │       ├── track/[token]/route.ts     GET tracking · POST verify
+│   │       ├── verify/route.ts            POST read-only verification
+│   │       ├── session/route.ts           POST password/owner sign-in · DELETE sign-out
+│   │       └── wallet-session/route.ts    POST SIWE challenge/verify
+│   ├── components/
+│   │   ├── live-workspace.tsx     Merchant dashboard (client)
+│   │   ├── checkout.tsx           Payer checkout (client)
+│   │   ├── verify-workspace.tsx   Verifier UI
+│   │   ├── request-starter.tsx    Guest draft form
+│   │   ├── wallet-login.tsx       SIWE sign-in flow
+│   │   ├── account-form.tsx       Password sign-in / recover / owner
+│   │   └── workspace.tsx          Simulated /demo prototype
+│   └── lib/
+│       ├── chain-types.ts         MONAD_TESTNET constants, ChainProof types
+│       ├── chain-verification.ts  RPC client, verifyTransfer, inspectReceipt
+│       ├── ledger.ts              Ledger class, schema, ledger() singleton
+│       ├── ledger-types.ts        RequestRecord, FundingRecord, ReviewRecord…
+│       ├── access.ts              Origin checks, sessions, operatorLedger()
+│       ├── local-access.ts        Loopback check, bounded JSON body reader
+│       ├── accounts.ts            Password accounts, recovery
+│       ├── wallet-auth.ts         SIWE challenge + verification
+│       ├── wallet-payment.ts      Calldata builder, sendPayment()
+│       ├── request-draft.ts       Guest draft validation
+│       ├── payments.ts            units/decimal/tokenAmount + demo model
+│       ├── exports.ts             CSV + browser download helper
+│       └── sample.ts              Fictional demo data for /demo
+└── tests/                         8 files, 46 tests (node:test)
+```
+
+<Accordion title="In plain English" icon="lightbulb">
+- `src/app` = the pages people visit and the server endpoints.
+- `src/components` = the interactive screens.
+- `src/lib` = the brains: checking the blockchain, saving data, login security.
+- `tests` = automatic checks that prove it all works.
+- `scripts` = helper tools for hosting and backups.
+</Accordion>
+
+## Path alias
+
+`@/*` resolves to `./src/*`, e.g. `import { ledger } from '@/lib/ledger'`.
+
+## Ignored files
+
+`.gitignore` excludes `node_modules/`, `.next/`, all `.env*` except `.env.example`, `.data/`, `*.sqlite*`, `.vercel/`, build info and test reports. **Your local database and wallet evidence are never committed.**

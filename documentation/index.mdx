@@ -1,0 +1,89 @@
+---
+title: "PayTrace documentation"
+sidebarTitle: "Welcome"
+description: "Every payment, accounted for. Noncustodial USDC payment requests, wallet checkout and finalized onchain verification on Monad Testnet."
+icon: "house"
+mode: "wide"
+---
+
+<img className="block dark:hidden" src="/logo/light.png" alt="PayTrace" style={{ maxWidth: '360px' }} />
+<img className="hidden dark:block" src="/logo/dark.png" alt="PayTrace" style={{ maxWidth: '360px' }} />
+
+**PayTrace** binds a merchant-issued USDC **payment request** to a public **checkout link** and to **finalized, canonical onchain evidence** on Monad Testnet. The payer transfers ERC-20 USDC directly from their own externally owned account (EOA) to the merchant's receiving address; a server-side verifier reads the transaction receipt through JSON-RPC, decodes the `Transfer` event log, checks chain ID, token contract, sender, recipient, exact integer amount, block canonicality and finality, and only then atomically claims that log as evidence and transitions the request to `received`. No custody, no smart contract, no token allowance.
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace is like an invoice that checks itself. You (the seller) create a payment request that says *"Ada should send me exactly 25 USDC."* You send Ada a link. Ada pays from her own crypto wallet straight into yours, PayTrace never touches the money. Then PayTrace looks at the public blockchain record and confirms: the right person sent the right amount of the right coin to the right wallet, and the payment is permanent. Only then does it say **Received** and give both of you a receipt. No screenshots, no "did you get it?" messages.
+</Accordion>
+
+## Choose your path
+
+<CardGroup cols={3}>
+  <Card title="I'm new to crypto" icon="graduation-cap" href="/get-started/blockchain-basics">
+    Wallets, USDC, transactions, gas and testnets explained from zero.
+  </Card>
+  <Card title="I want to get paid" icon="store" href="/get-started/quickstart-merchant">
+    Create your first payment request and share a checkout in five minutes.
+  </Card>
+  <Card title="Someone sent me a link" icon="wallet" href="/get-started/quickstart-payer">
+    How to pay a PayTrace checkout safely from your wallet.
+  </Card>
+  <Card title="I'm a developer" icon="terminal" href="/get-started/quickstart-developer">
+    Clone, run, test and deploy PayTrace yourself.
+  </Card>
+  <Card title="How does verification work?" icon="shield-check" href="/concepts/verification-rules">
+    The exact rules a transfer must pass before it counts.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    Every HTTP route, parameter, response and error.
+  </Card>
+</CardGroup>
+
+## The problem PayTrace solves
+
+A blockchain transfer is a **context-free value movement**: it records that address A moved N base units of token T to address B in block K. It does not carry an invoice number, a customer identity or a statement of intent. Reconciling it against a receivable therefore requires an operator to manually confirm the token contract, the chain, the counterparties, the amount at full precision, the transaction's success status, its finality, and that the same transfer has not already been applied to another receivable.
+
+<Accordion title="In plain English" icon="lightbulb">
+When money lands in a crypto wallet, the blockchain only says "someone sent you some coins." It doesn't say *which invoice* that was for. So sellers end up checking by hand: Was it the real USDC or a fake token? Was it the full amount? Did it come from the right customer? Is it final? Did I already count this same payment for another invoice? That's slow and error-prone. PayTrace does all of those checks automatically, every time.
+</Accordion>
+
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="Merchant workspace" icon="layout-dashboard">
+    Persistent requests with fixed amount, expected payer and receiving wallet. Internal notes, search, cancellation, CSV export and 15-second auto-refresh.
+  </Card>
+  <Card title="Customer checkout" icon="credit-card">
+    Wallet-assisted ERC-20 `transfer`, automatic chain switching to Monad Testnet, account checks, gas estimation, manual hash fallback and bounded auto-verification.
+  </Card>
+  <Card title="Verifiable receipts" icon="file-check-2">
+    Printable receipt plus downloadable JSON evidence with the token event, canonical block hash and finalized range.
+  </Card>
+  <Card title="Review inbox" icon="inbox">
+    Failed matches are explained, never silently accepted. Acknowledging a review never changes financial status.
+  </Card>
+  <Card title="Historical funding" icon="piggy-bank">
+    Independently verified past transfers (like faucet top-ups), kept separate from customer payments.
+  </Card>
+  <Card title="Wallet sign-in" icon="key-round">
+    Password-free EIP-4361 (Sign-In with Ethereum) accounts, isolated workspaces and signed, expiring HttpOnly sessions.
+  </Card>
+</CardGroup>
+
+## At a glance
+
+| Property | Value |
+| --- | --- |
+| Network | Monad Testnet, chain ID `10143` (`0x279f`) |
+| Token | Circle test USDC `0x534b2f3A21130d7a60830c2Df862319e593943A3`, 6 decimals |
+| Custody | None. Funds move wallet-to-wallet |
+| Smart contracts | None deployed by PayTrace |
+| Token approvals | None requested |
+| Framework | Next.js 16.3.8, React 19.2.8, TypeScript |
+| Storage | libSQL: local SQLite file or remote Turso |
+| Runtime | Node.js 24+ |
+| Live app | [paytrace-tau.vercel.app](https://paytrace-tau.vercel.app) |
+| Source | [github.com/Nailer/paytrace](https://github.com/Nailer/paytrace) |
+
+<Warning>
+PayTrace is an **initial multi-merchant testnet release**, not an audited production payments service. Test tokens have no monetary value. A finalized onchain receipt is **not** bank settlement, and cancelling a request does not reverse funds. See [Known limitations](/security/limitations).
+</Warning>

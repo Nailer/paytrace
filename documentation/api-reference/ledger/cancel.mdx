@@ -1,0 +1,32 @@
+---
+title: "Cancel request"
+api: "POST https://paytrace-tau.vercel.app/api/ledger"
+description: "action: cancel. Close an awaiting request's checkout."
+---
+
+Sets `status = "cancelled"` and resolves the request's reviews. Does **not** move or reverse funds.
+
+<Accordion title="In plain English" icon="lightbulb">
+Close the payment link. Your customer will see "This request is closed." Money already sent isn't affected.
+</Accordion>
+
+### Body
+
+<ParamField body="action" type="string" required>Must be `"cancel"`.</ParamField>
+<ParamField body="id" type="string" required>Request ID.</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/ledger \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://paytrace-tau.vercel.app' \
+  -H 'Cookie: paytrace_session=…' \
+  -d '{"action":"cancel","id":"PT-6c1e…"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 409
+{ "error": "Only an awaiting request can be cancelled." }
+```
+</ResponseExample>

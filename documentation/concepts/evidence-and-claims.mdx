@@ -1,0 +1,58 @@
+---
+title: "Evidence and claims"
+description: "How PayTrace identifies each transfer uniquely and guarantees it is counted exactly once."
+icon: "fingerprint"
+---
+
+## Evidence ID
+
+Every candidate `Transfer` log is assigned an **evidence ID**:
+
+```text
+<chainId>:<transactionHash>:<logIndex>
+10143:0x9f3c…e21a:4
+```
+
+`logIndex` is the log's position within its block, so the tuple uniquely identifies one event on one chain. A single transaction can contain several transfer events; each gets its own ID.
+
+<Accordion title="In plain English" icon="lightbulb">
+Each individual USDC movement gets a unique fingerprint made of the network number, the transaction's tracking number, and its position. Even if one transaction contains several payments, each one has its own fingerprint.
+</Accordion>
+
+## The `claims` table
+
+```sql
+CREATE TABLE IF NOT EXISTS claims (
+  evidence_id TEXT PRIMARY KEY,
+  owner       TEXT NOT NULL   -- request ID or funding record ID
+);
+```
+
+Claiming inserts a row. Because `evidence_id` is the **primary key**, a second insert of the same ID fails. PayTrace also checks for an existing row first and returns a friendly 409: *"This transfer is already recorded. It cannot be counted twice."*
+
+The claim is written **inside the same write transaction** as the status change (`match`) or the funding insert (`importFunding`). If any later step fails, the claim rolls back with it.
+
+<Accordion title="In plain English" icon="lightbulb">
+PayTrace keeps a "used fingerprints" list. Before accepting a payment it checks the list; when accepting, it adds the fingerprint. Both happen in one all-or-nothing step, so you can never end up with a payment that's half-recorded.
+</Accordion>
+
+## Shared across funding and requests
+
+The same `claims` table is used for both **customer payments** and **historical funding**. A transfer imported as funding cannot later pay a request, and vice versa (test: *"historical funding cannot pay an invoice or be imported twice"*).
+
+## Workspace scoping
+
+| Workspace | Stored key |
+| --- | --- |
+| `legacy` (original/local) | `10143:0x…:4` |
+| Account workspace `<uuid>` | `<uuid>:10143:0x…:4` |
+
+Scoping claims per workspace prevents a **griefing attack**: since transfers are public, another merchant could otherwise "reserve" someone else's transfer by claiming it first in their own workspace, blocking the legitimate owner. Within a workspace, uniqueness is absolute.
+
+<Accordion title="In plain English" icon="lightbulb">
+Payments on the blockchain are public. If fingerprints were shared between all PayTrace users, a stranger could copy your customer's payment into *their* account first and block you from recording it. So each workspace has its own "used" list.
+</Accordion>
+
+## Why multiple events are never summed
+
+If a transaction contains two transfers to the recipient (e.g. 5 + 5 when 10 was requested), PayTrace does **not** aggregate them. Outcome is `amount_mismatch` with a manual-review message. Aggregation would make it ambiguous which events were consumed and could allow partial double-counting.

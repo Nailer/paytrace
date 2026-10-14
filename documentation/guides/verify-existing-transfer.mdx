@@ -1,0 +1,36 @@
+---
+title: "Verify an existing transfer"
+description: "Already sent the USDC? Attach the transaction to the checkout without paying again."
+icon: "search-check"
+---
+
+Use **Already sent it?** on the checkout when:
+- you paid manually from your wallet using the **Manual payment details**,
+- your browser lost the saved hash,
+- automatic verification timed out after 4 minutes.
+
+## Find your transaction hash
+
+In your wallet's **Activity** list, open the USDC transfer and copy the transaction hash (`0x` + 64 hex), or copy it from the block explorer.
+
+## Submit it
+
+Paste it into **Transaction hash** and click **Verify existing transfer**. This calls `POST /api/track/{token}` with `{transactionHash}`: it reads the chain, **never sends funds**, and applies the same rules as automatic verification.
+
+| Response | Meaning |
+| --- | --- |
+| Payment received | Verified and recorded |
+| Transaction submitted. Waiting for a finalized receipt… | Pending; it keeps checking |
+| An error message | The transfer didn't satisfy the request; the merchant sees it under **Needs review** |
+
+## Manual payment requirements
+
+If you pay manually, all of these must be true:
+
+<Check>Network: Monad Testnet (chain 10143)</Check>
+<Check>Token: `0x534b2f3A21130d7a60830c2Df862319e593943A3`</Check>
+<Check>From: the expected payer address on the page</Check>
+<Check>To: the receiving wallet on the page</Check>
+<Check>Amount: exactly the requested amount</Check>
+<Check>Sent **after** the request was created</Check>
+<Check>A single transfer, not split into several</Check>

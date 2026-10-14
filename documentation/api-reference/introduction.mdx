@@ -1,0 +1,78 @@
+---
+title: "API introduction"
+description: "Base URL, conventions, content types, body limits and an endpoint index for the PayTrace HTTP API."
+icon: "book-open"
+---
+
+PayTrace exposes a small **JSON over HTTPS** API implemented as Next.js Route Handlers on the Node.js runtime. It's the same API the web UI uses. There is no separate API key system: merchant endpoints authenticate with the browser session cookie; checkout and verifier endpoints are public.
+
+<Accordion title="In plain English" icon="lightbulb">
+An API is how programs talk to PayTrace. The website itself uses these same endpoints. This section documents each one so developers can understand or integrate with PayTrace.
+</Accordion>
+
+## Base URL
+
+```text
+https://paytrace-tau.vercel.app
+```
+
+Local development: `http://127.0.0.1:3100`.
+
+## Endpoint index
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/ledger` | Merchant session | Workspace snapshot |
+| `POST` | `/api/ledger` | Merchant session | Actions: `settings`, `create`, `match`, `import`, `cancel`, `note`, `resolve` |
+| `GET` | `/api/track/{token}` | Token in path | Public tracking record |
+| `POST` | `/api/track/{token}` | Token in path | Verify a transaction against the request |
+| `POST` | `/api/verify` | None | Read-only verification |
+| `POST` | `/api/wallet-session` | None → sets session | SIWE `challenge` / `verify` |
+| `POST` | `/api/session` | None → sets session | Password `signin`, `signup`, `recover`, `owner` |
+| `DELETE` | `/api/session` | — | Sign out |
+
+## Conventions
+
+| Topic | Rule |
+| --- | --- |
+| Request body | `Content-Type: application/json` required on POST (else **415**) |
+| Body shape | A JSON **object** (arrays/primitives rejected with 400) |
+| Body size | ≤ **8192 bytes** (ledger, track, session, wallet-session), ≤ **4096 bytes** (verify) → **413** |
+| Responses | JSON. Errors are `{ "error": "<message>" }` |
+| Caching | `Cache-Control: no-store` on every API response |
+| Addresses | Accepted in any case; stored and returned lowercase |
+| Amounts | Decimal strings, ≤ 12 integer digits, ≤ 6 decimals; returned normalized to 6 decimals |
+| Hashes | `0x` + 64 hex |
+| Timestamps | ISO 8601 UTC strings |
+| Origin | Mutations must come from the deployment origin (see [Authentication](/api-reference/authentication)) |
+
+<Warning>
+This API is designed for PayTrace's own browser UI. Calling merchant endpoints from servers or scripts requires sending the exact `Origin` header and a valid session cookie. There is no API-key or OAuth flow, and no stability guarantee across versions.
+</Warning>
+
+## Quick example: public verification
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://paytrace-tau.vercel.app/api/verify \
+  -H 'Content-Type: application/json' \
+  -d '{"transactionHash":"0x…64 hex…","recipient":"0x…40 hex…","expectedAmount":"1"}'
+```
+
+```javascript JavaScript
+const res = await fetch('https://paytrace-tau.vercel.app/api/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ transactionHash: '0x…', recipient: '0x…', expectedAmount: '1' }),
+});
+const proof = await res.json();
+```
+
+```python Python
+import requests
+proof = requests.post(
+    "https://paytrace-tau.vercel.app/api/verify",
+    json={"transactionHash": "0x…", "recipient": "0x…", "expectedAmount": "1"},
+).json()
+```
+</CodeGroup>

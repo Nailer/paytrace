@@ -1,0 +1,77 @@
+---
+title: "Review inbox"
+description: "How failed matches are captured, explained and acknowledged without ever changing payment status."
+icon: "inbox"
+---
+
+The **Needs review** view lists transfers that were submitted against a request but did not satisfy it. It exists so that mismatches are **visible** instead of silently ignored, and so they are **never** silently accepted either.
+
+<Accordion title="In plain English" icon="lightbulb">
+If a customer pays the wrong amount, pays from a different wallet, or pays the wrong coin, PayTrace doesn't mark the invoice paid, but it also doesn't just shrug. It puts a note in your **Needs review** inbox saying exactly what went wrong, so you can follow up.
+</Accordion>
+
+## When a review item is created
+
+A review item is inserted whenever `Ledger.match` throws a `LedgerError` with HTTP status **422** during:
+- a checkout verification (`POST /api/track/{token}`), or
+- a merchant match (`POST /api/ledger` with `action: "match"`).
+
+```sql
+CREATE TABLE IF NOT EXISTS reviews (
+  id         TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL,
+  hash       TEXT NOT NULL,
+  reason     TEXT NOT NULL,      -- truncated to 500 chars
+  at         TEXT NOT NULL,
+  resolved   INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(request_id, hash)
+);
+```
+
+Constraints:
+- Only for requests still `awaiting`.
+- Only for syntactically valid hashes.
+- `INSERT OR IGNORE` on `(request_id, hash)`: the same hash against the same request produces one item.
+- At most **20** review items per request (flood protection: the checkout is public).
+
+Pending outcomes (`unavailable`, `not_finalized`) never create reviews; they return 202 and keep polling.
+
+## Typical reasons
+
+| Reason shown | Cause |
+| --- | --- |
+| The recipient matches, but the transferred amount differs from the requested amount. | Under- or overpayment |
+| The transfer must come from this request's expected payer wallet. | Wrong sender, mint, no matching transfer, or multiple transfers |
+| This transfer predates the request. Import it as historical funding instead. | Transfer block ≤ `afterBlock` |
+| This transaction reverted. It cannot be counted as a received payment. | Failed transaction |
+| Multiple incoming USDC events need manual review… | More than one candidate event |
+| No positive transfer from the supported USDC contract to this recipient was found… | Wrong token or wrong recipient |
+
+## Acknowledging
+
+Click **Acknowledge** (API: `{action: "resolve", id}`). This sets `resolved = 1` on that item **only**. It does **not**:
+- mark the request received,
+- return funds,
+- claim the evidence.
+
+<Warning>
+Acknowledgement changes the review item, never the financial status. Covered by the test *"review acknowledgement never marks a request paid; successful match resolves its reviews"*.
+</Warning>
+
+## Automatic resolution
+
+When a request transitions to `received` or `cancelled`, **all** its review items are marked resolved in the same transaction.
+
+## Snapshot visibility
+
+The workspace snapshot returns **every unresolved** review plus at most the **100 most recent resolved** ones, ordered unresolved-first then newest-first. Unresolved items are never hidden by the history cap (regression test with 120 items).
+
+## What to do with a review item
+
+<Steps>
+  <Step title="Read the reason">It tells you which rule failed.</Step>
+  <Step title="Check the transaction">Use the hash on [Monadscan](https://testnet.monadscan.com) or [`/verify`](/guides/verify-any-transaction).</Step>
+  <Step title="Settle it off-platform">Contact the payer. PayTrace cannot refund or move funds.</Step>
+  <Step title="Choose the next action">Ask for a correct payment, [import it as funding](/guides/import-funding) if it was a deposit, or cancel and re-issue the request.</Step>
+  <Step title="Acknowledge">Clear the item from your inbox.</Step>
+</Steps>

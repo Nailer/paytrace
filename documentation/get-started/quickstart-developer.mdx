@@ -1,0 +1,94 @@
+---
+title: "Developer quickstart"
+description: "Clone, install, run, test and build PayTrace locally."
+icon: "terminal"
+---
+
+## Prerequisites
+
+| Requirement | Version | Why |
+| --- | --- | --- |
+| Node.js | **24 or newer** (`.nvmrc` = `24`) | The test suite and backup script use the built-in `node:sqlite` module, and `package.json` declares `engines.node >= 24` |
+| npm | Bundled with Node | Lockfile is `package-lock.json` |
+| Git | Any recent | Clone the repository |
+| Browser wallet | Optional | Only for wallet sign-in and paying checkouts |
+
+<Accordion title="In plain English" icon="lightbulb">
+You need Node.js version 24 (the program that runs JavaScript on your computer). If you use `nvm`, just run `nvm use` inside the project and it will pick the right version.
+</Accordion>
+
+## Run it
+
+<Steps>
+  <Step title="Clone">
+    ```bash
+    git clone https://github.com/Nailer/paytrace.git
+    cd paytrace
+    ```
+  </Step>
+  <Step title="Install exact dependencies">
+    ```bash
+    npm ci
+    ```
+    `npm ci` installs exactly what `package-lock.json` specifies and fails if it's out of sync with `package.json`.
+  </Step>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+    This runs `next dev --hostname 127.0.0.1 --port 3100`. Open [http://127.0.0.1:3100](http://127.0.0.1:3100).
+  </Step>
+  <Step title="(Optional) enable wallet sign-in locally">
+    Wallet and password sign-in require a session secret even locally. Create `.env.local`:
+    ```bash .env.local
+    PAYTRACE_SESSION_SECRET=replace-with-at-least-32-random-characters
+    ```
+    Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
+  </Step>
+</Steps>
+
+<Note>
+**Local mode needs no secrets for the workspace itself.** Without `PAYTRACE_PUBLIC_ORIGIN`, the server is in *local mode*: the merchant API only accepts requests whose `Host` is `127.0.0.1`, `localhost` or `[::1]`, and the single local workspace is the `legacy` workspace. The SQLite file is created at `.data/paytrace.sqlite`.
+</Note>
+
+<Accordion title="In plain English" icon="lightbulb">
+On your own computer, PayTrace trusts you because only your computer can reach it. It saves everything to a small database file in a hidden `.data` folder. You don't need to configure anything to try it.
+</Accordion>
+
+## Verify your setup
+
+```bash
+npm test          # 46 tests via node --test + tsx
+npm run typecheck # tsc --noEmit
+npm run build     # next build
+npm start         # production server on 127.0.0.1:3100
+```
+
+All four are exactly what CI runs. See [Testing](/operate/testing).
+
+## npm scripts
+
+| Script | Command | Purpose |
+| --- | --- | --- |
+| `dev` | `next dev --hostname 127.0.0.1 --port 3100` | Hot-reload development server, loopback only |
+| `build` | `next build` | Production build |
+| `start` | `next start --hostname 127.0.0.1 --port 3100` | Serve the production build locally |
+| `typecheck` | `tsc --noEmit` | Strict TypeScript check |
+| `test` | `node --import tsx --test tests/*.test.ts` | Run the Node test runner on TypeScript tests |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Project structure" icon="folder-tree" href="/architecture/project-structure">
+    Where everything lives.
+  </Card>
+  <Card title="Configuration" icon="settings" href="/operate/configuration">
+    Every environment variable.
+  </Card>
+  <Card title="Deploy to Vercel" icon="cloud" href="/operate/deploy-vercel">
+    Hosted with Turso.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    Talk to the server directly.
+  </Card>
+</CardGroup>
